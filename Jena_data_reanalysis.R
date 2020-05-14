@@ -236,7 +236,7 @@ ggplot(data = jena_dat_years %>%
 # Plot the relationship between species pool diversity and realised species richness
 ggplot(data = jena_dat_years %>% 
          filter(sowndiv < 60, sowndiv > 1),
-       mapping = aes(x = sowndiv, y = observed_species_m)) +
+       mapping = aes(x = sowndiv, y = observed_species_mean)) +
   geom_point(alpha = 0.6, shape = 16) +
   geom_abline(intercept = c(0), slope = c(1), colour = "black", size = 0.5, linetype = "dashed") +
   scale_x_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
@@ -247,81 +247,80 @@ ggplot(data = jena_dat_years %>%
 
 
 
-ggplot(data = jena_dat_years %>% filter(sowndiv == 16),
-       aes(x = total_species_m, y = target_biomass_mean)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.5) +
-  ylab("community biomass") +
-  xlab("realised diversity") +
-  theme_classic()
+# simulate the effect of changing species pool gradients in Jena data
 
-ggplot(data = jena_dat_years %>% filter(sowndiv == 4),
-       aes(x = observed_species_m, y = target_biomass_mean)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.5) +
-  ylab("community biomass") +
-  xlab("realised diversity") +
-  theme_classic()
-
-
-### Simulate the effect of changing species pool gradients in Jena data
-
-# How many plots are there for different ranges?
-jena_dat_years %>% group_by(as.character(sowndiv)) %>%
+# how many plots are there for different ranges?
+jena_dat_years %>% 
+  group_by(as.character(sowndiv)) %>%
   summarise(n = n())
 
-# Set up plots without the 60 species plots
-jena_dat_samp <- jena_dat_years %>% filter(sowndiv < 60)
+# set up plots without the 60 species plots
+jena_dat_samp <- 
+  jena_dat_years %>% 
+  filter(sowndiv < 60)
 
 # Set-up ranges for the data
-sd_vec_asc <- jena_dat_samp %>% 
+spp_ascent <- 
+  jena_dat_samp %>% 
   pull(sowndiv) %>%
   unique()
 
-sd_vec_des <- sort(sd_vec_asc, decreasing = TRUE)
+spp_descent <- sort(spp_ascent, decreasing = TRUE)
 
-# Create all possible combinations but when lower > upper and
+# create all possible combinations but when lower > upper and
 # remove the 1-1 and 2-2 treatment because there is no possible observed diversity gradient
-combs <- crossing(sd_vec_asc, sd_vec_des) %>%
-  mutate(remain = if_else(sd_vec_asc <= sd_vec_des, 1, 0)) %>%
+combs <- 
+  crossing(spp_ascent, spp_descent) %>%
+  mutate(remain = if_else(spp_ascent <= spp_descent, 1, 0)) %>%
   filter(remain == 1) %>% 
   select(-remain) %>%
-  filter(!(sd_vec_asc == 1 & sd_vec_des == 1)) %>%
-  filter(!(sd_vec_asc == 2 & sd_vec_des == 2))
+  filter(!(spp_ascent == 1 & spp_descent == 1)) %>%
+  filter(!(spp_ascent == 2 & spp_descent == 2))
 
+# set the number of replications to take
 n_reps <- 100
 
-sp_ranges <- combs[rep(seq_len(nrow(combs)), each = n_reps), ]
+sp_ranges <- combs[ rep(seq(1:nrow(combs)), each = n_reps), ]
 
 n_samples <- 12
 
 samp_dat_ran <- vector("list", length = nrow(sp_ranges))
 for (i in seq_along(1:nrow(sp_ranges))) {
-  jena_samp <- filter(jena_dat_samp, 
-                      sowndiv >= sp_ranges$sd_vec_asc[i],
-                      sowndiv <= sp_ranges$sd_vec_des[i])
-  samp_dat_ran[[i]] <- jena_samp[sample(x = seq_along(1:nrow(jena_samp)), 
-                                        size = n_samples),]
+  jena_samp <- 
+    filter(jena_dat_samp, 
+           sowndiv >= sp_ranges$spp_ascent[i],
+           sowndiv <= sp_ranges$spp_descent[i])
+  
+  samp_dat_ran[[i]] <- 
+    jena_samp[sample(x = seq_along(1:nrow(jena_samp)), size = n_samples),]
 }
 
-# Bind simulated data into a dataframe
-sim_dat_all <- bind_rows(samp_dat_ran, .id = "replicate") %>%
+### CLEAN THIS CODE...
+
+
+# bind simulated data into a dataframe
+sim_dat_all <- 
+  bind_rows(samp_dat_ran, .id = "replicate") %>%
   group_by(replicate) %>%
   mutate(start_end_div = paste(min(sowndiv), max(sowndiv), sep = "_"),
          start_div = min(sowndiv),
          end_div = max(sowndiv)) %>%
   mutate(species_pool_range = max(sowndiv) - min(sowndiv),
-         observed_div_range = max(observed_species_m) - min(observed_species_m)) %>%
+         observed_div_range = max(observed_species_mean) - min(observed_species_mean)) %>%
   mutate(species_pool = as.character(species_pool_range)) %>%
   ungroup()
 
 # Fit linear models and get the coefficients when there is some observed gradient
-lm_fits <- sim_dat_all %>% group_by(replicate) %>%
-  mutate(target_biomass_mean = scale(target_biomass_mean),
-         observed_species_m = scale(observed_species_m)) %>% ungroup %>%
+lm_fits <- 
+  sim_dat_all %>% 
+  group_by(replicate) %>%
+  mutate(target_biomass_m_mean = scale(target_biomass_m_mean),
+         observed_species_mean = scale(observed_species_mean)) %>% 
+  ungroup %>%
   group_by(start_end_div, replicate) %>%
-  do(fit_sim = lm(target_biomass_mean ~ observed_species_m, data = .)) %>%
-  tidy(fit_sim) %>% ungroup() %>%
+  do(fit_sim = lm(target_biomass_m_mean ~ sowndiv, data = .)) %>%
+  tidy(fit_sim) %>% 
+  ungroup() %>%
   filter(term == "observed_species_m") %>%
   select(-statistic, -p.value)
 
@@ -330,13 +329,13 @@ sim_dat_all <- full_join(sim_dat_all, lm_fits,
                          by = c("start_end_div", "replicate"))
 
 # Plot the standardised coefficients against the species pool size
-tot_cof <- summary(lm(target_biomass_mean ~ observed_species_m,
+tot_cof <- summary(lm(target_biomass_m_mean ~ observed_species_mean,
                       data = jena_dat_samp %>% 
-                        mutate(target_biomass_mean = scale(target_biomass_mean),
-                               observed_species_m = scale(observed_species_m))))$coefficients
+                        mutate(target_biomass_m_mean = scale(target_biomass_m_mean),
+                               observed_species_mean = scale(observed_species_mean))))$coefficients
 bind_cols(species_pool_range = 16, estimate = tot_cof[2,1])
 
-x1 <- sim_dat_all %>% 
+sim_dat_all %>% 
   select("replicate", "species_pool_range", "start_div", "end_div",
          "observed_div_range", "estimate") %>% 
   distinct() %>%
