@@ -284,7 +284,7 @@ combs <-
 combs
 
 # set the number of replications to take of each initial diversity range combination
-n_reps <- 20
+n_reps <- 30
 
 # replicate the initial diversity ranges to match with the replicates
 sp_ranges <- combs[ rep(seq(1:nrow(combs)), each = n_reps), ]
@@ -307,8 +307,6 @@ for (i in seq_along(1:nrow(sp_ranges))) {
 }
 
 samp_dat[[1]]
-
-### CLEAN THIS CODE...
 
 # collapse the iterated data and generate new modifier variables
 sim_out <- 
@@ -354,26 +352,76 @@ sim_out <-
 
 # plot the relationship between initial diversity range and the observed diversity-function slope
 
-ggplot(data = sim_out,
+# set minimum realised diversity range
+min_r <- 3
+
+ord <- 
+  sim_out %>%
+  filter(realised_div_range > min_r) %>%
+  pull(initial_div_range) %>%
+  unique() %>%
+  sort()
+
+rea <- 
+  sim_out %>%
+  filter(realised_div_range > min_r) %>%
+  pull(realised_div_range) %>%
+  unique() %>%
+  sort()
+
+ggplot(data = sim_out %>%
+         filter(realised_div_range > min_r),
        mapping = aes(x = initial_div_range, y = estimate, colour = realised_div_range)) +
   geom_jitter(alpha = 0.5, shape = 16) +
   geom_smooth(method = "lm", colour = "black",
               size = 0.5) +
-  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_x_continuous(breaks = ord) +
   xlab("initial diversity range") +
   ylab("realised diversity function slope") +
-  labs(colour = "observed diversity range") +
+  labs(colour = "realised diversity range") +
   scale_colour_viridis_c() +
-  theme_classic()
+  theme_classic() +
+  theme(legend.position="top")
 
+# plot insets to show the slope calculation
+insets <- 
+  samp_dat %>%
+  bind_rows(.id = "replicate") %>%
+  group_by(replicate) %>%
+  mutate(sowndiv_range = paste(min(sowndiv), max(sowndiv), sep = "_"),
+         sowndiv_min = min(sowndiv),
+         sowndiv_max = max(sowndiv)) %>%
+  mutate(initial_div_range = max(sowndiv) - min(sowndiv),
+         realised_div_range = max(observed_species_mean) - min(observed_species_mean)) %>%
+  mutate(species_pool = as.character(initial_div_range)) %>%
+  ungroup() %>%
+  filter(realised_div_range > min_r)
 
-# plot the relationship between species pool range and observed diversity range
+# sample 
+i_reps <- 
+  insets %>%
+  filter(initial_div_range %in% c(0, 6, 14) ) %>%
+  group_by(initial_div_range) %>%
+  sample_n(., size = 1) %>%
+  ungroup() %>%
+  pull(replicate)
 
-ggplot(data = sim_out,
-       aes(x = initial_div_range, y = realised_div_range)) +
-  geom_jitter(alpha = 0.5, shape = 16) +
-  geom_smooth(method = "lm") +
-  theme_classic()
+insets %>%
+  filter(replicate %in% i_reps) %>%
+  split(., .$replicate) %>%
+  lapply(function (x) {
+    
+    ggplot(data = x,
+           mapping = aes(x = observed_species_mean, y = target_biomass_m_mean)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.1) +
+      ggtitle(paste0("initial_div_range_", x$initial_div_range[1]) ) +
+      ylab("biomass") +
+      xlab("realised diversity") +
+      theme_classic()
+    
+  })
 
 
 
