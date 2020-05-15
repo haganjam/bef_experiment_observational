@@ -310,75 +310,67 @@ samp_dat[[1]]
 
 ### CLEAN THIS CODE...
 
-sim_d
-
-
-
-# bind simulated data into a dataframe
-sim_dat_all <- 
-  bind_rows(samp_dat_ran, .id = "replicate") %>%
+# collapse the iterated data and generate new modifier variables
+sim_out <- 
+  samp_dat %>%
+  bind_rows(.id = "replicate") %>%
   group_by(replicate) %>%
-  mutate(start_end_div = paste(min(sowndiv), max(sowndiv), sep = "_"),
-         start_div = min(sowndiv),
-         end_div = max(sowndiv)) %>%
-  mutate(species_pool_range = max(sowndiv) - min(sowndiv),
-         observed_div_range = max(observed_species_mean) - min(observed_species_mean)) %>%
-  mutate(species_pool = as.character(species_pool_range)) %>%
+  mutate(sowndiv_range = paste(min(sowndiv), max(sowndiv), sep = "_"),
+         sowndiv_min = min(sowndiv),
+         sowndiv_max = max(sowndiv)) %>%
+  mutate(initial_div_range = max(sowndiv) - min(sowndiv),
+         realised_div_range = max(observed_species_mean) - min(observed_species_mean)) %>%
+  mutate(species_pool = as.character(initial_div_range)) %>%
   ungroup()
+  
 
-# Fit linear models and get the coefficients when there is some observed gradient
-lm_fits <- 
-  sim_dat_all %>% 
+# extract linear model slope for the observed diversity gradient
+sim_out_slopes <- 
+  sim_out %>% 
   group_by(replicate) %>%
   mutate(target_biomass_m_mean = scale(target_biomass_m_mean),
          observed_species_mean = scale(observed_species_mean)) %>% 
-  ungroup %>%
-  group_by(start_end_div, replicate) %>%
-  do(fit_sim = lm(target_biomass_m_mean ~ sowndiv, data = .)) %>%
+  ungroup() %>%
+  group_by(sowndiv_range, replicate) %>%
+  do(fit_sim = lm(target_biomass_m_mean ~ observed_species_mean, data = .)) %>%
   tidy(fit_sim) %>% 
   ungroup() %>%
-  filter(term == "observed_species_m") %>%
+  filter(term == "observed_species_mean") %>%
   select(-statistic, -p.value)
 
-# Join the lm_fits data to the sim_dats all
-sim_dat_all <- full_join(sim_dat_all, lm_fits, 
-                         by = c("start_end_div", "replicate"))
 
-# Plot the standardised coefficients against the species pool size
-tot_cof <- summary(lm(target_biomass_m_mean ~ observed_species_mean,
-                      data = jena_dat_samp %>% 
-                        mutate(target_biomass_m_mean = scale(target_biomass_m_mean),
-                               observed_species_mean = scale(observed_species_mean))))$coefficients
-bind_cols(species_pool_range = 16, estimate = tot_cof[2,1])
+# join these slope data to the rest of the data
+sim_out <- 
+  full_join(sim_out, 
+            sim_out_slopes, 
+            by = c("sowndiv_range", "replicate"))
 
-sim_dat_all %>% 
-  select("replicate", "species_pool_range", "start_div", "end_div",
-         "observed_div_range", "estimate") %>% 
-  distinct() %>%
-  ggplot(aes(x = species_pool_range, y = estimate, colour = observed_div_range)) +
+# subset relevant variables and remove replicate data points from the join
+sim_out <- 
+  sim_out %>% 
+  select(replicate, initial_div_range, sowndiv_min, sowndiv_max,
+         realised_div_range, estimate) %>% 
+  distinct() 
+
+# plot the relationship between initial diversity range and the observed diversity-function slope
+
+ggplot(data = sim_out,
+       mapping = aes(x = initial_div_range, y = estimate, colour = realised_div_range)) +
   geom_jitter(alpha = 0.5, shape = 16) +
   geom_smooth(method = "lm", colour = "black",
               size = 0.5) +
-  #geom_point(data = bind_cols(species_pool_range = 16, estimate = tot_cof[2,1]),
-  #aes(x = species_pool_range, y = estimate), colour = "black",
-  #shape = 16, size = 2.5) +
   geom_hline(yintercept = 0) +
-  xlab("species pool range") +
-  ylab("BEF slope") +
-  labs(colour = "observed range") +
+  xlab("initial diversity range") +
+  ylab("realised diversity function slope") +
+  labs(colour = "observed diversity range") +
   scale_colour_viridis_c() +
   theme_classic()
 
-ggsave(x1, 
-       filename = "species_pool_size.jpeg",
-       dpi = 300, units = "cm",
-       width = 12, height = 8)
 
-# Plot the relationship between species pool range and observed diversity range
-sim_dat_all %>% 
-  select("replicate", "species_pool_range", "observed_div_range", "estimate",) %>% 
-  distinct() %>%
-  ggplot(aes(x = species_pool_range, y = observed_div_range)) +
+# plot the relationship between species pool range and observed diversity range
+
+ggplot(data = sim_out,
+       aes(x = initial_div_range, y = realised_div_range)) +
   geom_jitter(alpha = 0.5, shape = 16) +
   geom_smooth(method = "lm") +
   theme_classic()
