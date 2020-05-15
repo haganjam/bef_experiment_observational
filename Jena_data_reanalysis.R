@@ -70,6 +70,7 @@ site_dat <-
            rowSums())
 
 
+
 # Use the jena_bio dataset to get plot-level (20 x 20 m) target biomass measurements
 
 # load the Jena biomass data
@@ -127,6 +128,7 @@ jena_dat <-
   full_join(site_dat, site_bio_dat, by = c("plotcode", "time")) %>% 
   select(var_names)
 
+
 # calculate the total number of species observed across years
 
 df_agg <- 
@@ -178,6 +180,7 @@ ggplot(data = filter(jena_dat, season == "spring") %>%
   facet_wrap(~year, scales = "free") +
   theme_classic()
 
+
 # how does species pool richness correlate with realised species richness?
 ggplot(data = filter(jena_dat, season == "spring") %>% 
          mutate(year = as.character(year)), 
@@ -223,7 +226,7 @@ jena_dat_years %>%
         legend.position = "none")
 
 
-# Plot the relationship between species pool diversity and ecosystem function
+# plot the relationship between species pool diversity and ecosystem function
 ggplot(data = jena_dat_years %>% 
          filter(sowndiv < 60, sowndiv > 1),
        mapping = aes(x = sowndiv, y = target_biomass_m_mean)) +
@@ -233,12 +236,12 @@ ggplot(data = jena_dat_years %>%
   xlab("species pool diversity") +
   theme_classic()
 
-# Plot the relationship between species pool diversity and realised species richness
+# plot the relationship between species pool diversity and realised species richness
 ggplot(data = jena_dat_years %>% 
          filter(sowndiv < 60, sowndiv > 1),
        mapping = aes(x = sowndiv, y = observed_species_mean)) +
+  geom_abline(intercept = 0, slope = 1, colour = "black", size = 0.1, linetype = "dashed") +
   geom_point(alpha = 0.6, shape = 16) +
-  geom_abline(intercept = c(0), slope = c(1), colour = "black", size = 0.5, linetype = "dashed") +
   scale_x_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
   scale_y_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
   ylab("realised diversity") +
@@ -265,7 +268,8 @@ spp_ascent <-
   pull(sowndiv) %>%
   unique()
 
-spp_descent <- sort(spp_ascent, decreasing = TRUE)
+spp_descent <- 
+  sort(spp_ascent, decreasing = TRUE)
 
 # create all possible combinations but when lower > upper and
 # remove the 1-1 and 2-2 treatment because there is no possible observed diversity gradient
@@ -277,25 +281,37 @@ combs <-
   filter(!(spp_ascent == 1 & spp_descent == 1)) %>%
   filter(!(spp_ascent == 2 & spp_descent == 2))
 
-# set the number of replications to take
-n_reps <- 100
+combs
 
+# set the number of replications to take of each initial diversity range combination
+n_reps <- 20
+
+# replicate the initial diversity ranges to match with the replicates
 sp_ranges <- combs[ rep(seq(1:nrow(combs)), each = n_reps), ]
 
+# set the number of plots to draw in each run
 n_samples <- 12
 
-samp_dat_ran <- vector("list", length = nrow(sp_ranges))
+samp_dat <- vector("list", length = nrow(sp_ranges) )
+
 for (i in seq_along(1:nrow(sp_ranges))) {
+  
   jena_samp <- 
     filter(jena_dat_samp, 
            sowndiv >= sp_ranges$spp_ascent[i],
            sowndiv <= sp_ranges$spp_descent[i])
   
-  samp_dat_ran[[i]] <- 
-    jena_samp[sample(x = seq_along(1:nrow(jena_samp)), size = n_samples),]
+  samp_dat[[i]] <- 
+    jena_samp[ sample(x = seq_along(1:nrow(jena_samp)), size = n_samples), ]
+  
 }
 
+samp_dat[[1]]
+
 ### CLEAN THIS CODE...
+
+sim_d
+
 
 
 # bind simulated data into a dataframe
