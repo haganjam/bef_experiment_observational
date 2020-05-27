@@ -1,5 +1,4 @@
 
-
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
 # Title: van der Plas (2019) systematic review data
@@ -116,6 +115,19 @@ vand_dat_c <- bind_rows(vand_dat_1, vand_dat_2)
 
 # this dataset is cleaned and can now be searched for spatial grain and extent information
 nrow(vand_dat_c)
+
+# export an excel file to fill in the spatial grain and spatial extent information from the papers
+
+# how many papers are there to go through?
+vand_dat_c$`paper number` %>%
+  unique() %>%
+  length()
+
+vand_dat_c %>%
+  mutate(spatial_grain = c(NA),
+         spatial_extent = c(NA),
+         grain_extent_notes = c(NA)) %>%
+  write_csv(., path = here("data/van_der_Plas_review_spatial_grains.csv"))
 
 
 
