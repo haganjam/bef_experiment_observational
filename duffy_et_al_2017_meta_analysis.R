@@ -62,3 +62,15 @@ duf_dat_p$Reference %>%
 
 nrow(duf_dat_p)
 
+
+# export a .csv file to fill in the spatial grain and extent of these studies
+
+duf_dat_p %>%
+  mutate(spatial_grain = c(NA),
+         spatial_extent = c(NA),
+         grain_extent_notes = c(NA)) %>%
+  write_csv(., path = here("data/duffy_2017_meta_analysis_spatial.csv"))
+
+
+
+
