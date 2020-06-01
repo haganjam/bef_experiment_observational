@@ -262,6 +262,14 @@ jena_dat_samp <-
   jena_dat_years %>% 
   filter(sowndiv < 60)
 
+jena_dat_samp$sowndiv %>%
+  unique()
+
+# remove the monocultures
+jena_dat_samp <- 
+  jena_dat_samp %>%
+  filter(sowndiv > 1)
+
 # Set-up ranges for the data
 spp_ascent <- 
   jena_dat_samp %>% 
@@ -278,7 +286,6 @@ combs <-
   mutate(remain = if_else(spp_ascent <= spp_descent, 1, 0)) %>%
   filter(remain == 1) %>% 
   select(-remain) %>%
-  filter(!(spp_ascent == 1 & spp_descent == 1)) %>%
   filter(!(spp_ascent == 2 & spp_descent == 2))
 
 combs
@@ -317,7 +324,9 @@ sim_out <-
          sowndiv_min = min(sowndiv),
          sowndiv_max = max(sowndiv)) %>%
   mutate(initial_div_range = max(sowndiv) - min(sowndiv),
-         realised_div_range = max(observed_species_mean) - min(observed_species_mean)) %>%
+         realised_div_range = max(observed_species_mean) - min(observed_species_mean),
+         min_realised = min(observed_species_mean),
+         max_realised = max(observed_species_mean)) %>%
   mutate(species_pool = as.character(initial_div_range)) %>%
   ungroup()
   
@@ -347,13 +356,13 @@ sim_out <-
 sim_out <- 
   sim_out %>% 
   select(replicate, initial_div_range, sowndiv_min, sowndiv_max,
-         realised_div_range, estimate) %>% 
+         realised_div_range, min_realised, max_realised, estimate) %>% 
   distinct() 
 
 # plot the relationship between initial diversity range and the observed diversity-function slope
 
 # set minimum realised diversity range
-min_r <- 3
+min_r <- 1
 
 ord <- 
   sim_out %>%
@@ -361,6 +370,7 @@ ord <-
   pull(initial_div_range) %>%
   unique() %>%
   sort()
+ord
 
 rea <- 
   sim_out %>%
@@ -368,13 +378,21 @@ rea <-
   pull(realised_div_range) %>%
   unique() %>%
   sort()
+rea
 
-ggplot(data = sim_out %>%
+# check if low initial diversity values are biased
+sim_out %>%
+  filter(realised_div_range > min_r) %>%
+  filter(initial_div_range == 0) %>%
+  pull(sowndiv_max) %>%
+  unique()
+
+
+j1 <- 
+  ggplot(data = sim_out %>%
          filter(realised_div_range > min_r),
        mapping = aes(x = initial_div_range, y = estimate, colour = realised_div_range)) +
-  geom_jitter(alpha = 0.5, shape = 16) +
-  geom_smooth(method = "lm", colour = "black",
-              size = 0.5) +
+  geom_jitter(alpha = 0.5, shape = 16, size = 4, width = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_x_continuous(breaks = ord) +
   xlab("initial diversity range") +
@@ -383,6 +401,10 @@ ggplot(data = sim_out %>%
   scale_colour_viridis_c() +
   theme_classic() +
   theme(legend.position="top")
+
+ggsave(filename = here("figures/jena_dat.png"), plot = j1,
+       height = 10, width = 12, dpi = 300, units = "cm")
+
 
 # plot insets to show the slope calculation
 insets <- 
@@ -397,6 +419,12 @@ insets <-
   mutate(species_pool = as.character(initial_div_range)) %>%
   ungroup() %>%
   filter(realised_div_range > min_r)
+
+# check the sowndiv values when without any additional diversity range
+insets %>%
+  filter(initial_div_range == 0) %>%
+  pull(sowndiv) %>%
+  unique()
 
 # sample 
 i_reps <- 
@@ -414,7 +442,7 @@ insets %>%
     
     ggplot(data = x,
            mapping = aes(x = observed_species_mean, y = target_biomass_m_mean)) +
-      geom_point() +
+      geom_point(size = 4) +
       geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.1) +
       ggtitle(paste0("initial_div_range_", x$initial_div_range[1]) ) +
       ylab("biomass") +
