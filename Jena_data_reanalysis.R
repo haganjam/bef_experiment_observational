@@ -181,6 +181,26 @@ ggplot(data = filter(jena_dat, season == "spring") %>%
   theme_classic()
 
 
+# plot for intro seminar
+intro_plot <- 
+  ggplot(data = filter(jena_dat, season == "spring",
+                     year == 2003,
+                     sowndiv > 1,
+                     sowndiv < 60) %>%
+         mutate(sowndiv = as.character(sowndiv)), 
+       mapping = aes(x = observed_species, y = target_biomass_m, colour = sowndiv)) +
+  geom_jitter(width = 0.5, size = 4, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE) +
+  ylab("") +
+  xlab("") +
+  scale_colour_viridis_d() +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 15))
+ggsave(filename = here("figures/intro_sem.png"),
+       width = 14, height = 12, dpi = 300, units = "cm")
+
+
 # how does species pool richness correlate with realised species richness?
 ggplot(data = filter(jena_dat, season == "spring") %>% 
          mutate(year = as.character(year)), 
