@@ -116,6 +116,15 @@ vand_dat_c <- bind_rows(vand_dat_1, vand_dat_2)
 # this dataset is cleaned and can now be searched for spatial grain and extent information
 nrow(vand_dat_c)
 
+# however, we need to add the 'other remarks data' because this actually contains some habitat type information
+other_dat <- 
+  vand_dat_raw %>%
+  select(Relationship_nr, 'Other remarks')
+
+# join these data to the vand_dat_c data
+vand_dat_c <- 
+  inner_join(vand_dat_c, other_dat, by = c("Relationship_nr") )
+
 # export an excel file to fill in the spatial grain and spatial extent information from the papers
 
 # how many papers are there to go through?
@@ -123,10 +132,19 @@ vand_dat_c$`paper number` %>%
   unique() %>%
   length()
 
+sub_names <- 
+  names(vand_dat_c)[c(3, 4, 5, 6, 7, 8, 9, 11, 12, 30, 13, 14, 15, 16, 17, 
+                    18, 19, 29)]
+
 vand_dat_c %>%
-  mutate(spatial_grain = c(NA),
-         spatial_extent = c(NA),
-         grain_extent_notes = c(NA)) %>%
+  select(sub_names) %>%
+  mutate(min_lat = c("."),
+         max_lat = c("."),
+         min_lon = c("."),
+         max_lon = c("."),
+         spatial_grain = c("."),
+         spatial_extent = c("."),
+         grain_extent_notes = c(".")) %>%
   write_csv(., path = here("data/van_der_Plas_review_spatial_grains.csv"))
 
 
