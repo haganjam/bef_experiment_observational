@@ -221,21 +221,18 @@ ggplot(data = filter(jena_dat, season == "spring") %>%
   theme_classic()
 
 
-# take the mean across all years in spring
+# take the values in the last year of the experiment (i.e. 2008)
 jena_dat_years <- 
   jena_dat %>%
-  filter(season == "spring") %>%
-  group_by(sowndiv, plotcode) %>%
-  summarise_at(vars(c("target_biomass_m", "observed_species", "total_species")),
-               list(mean = ~mean(., na.rm = TRUE),
-                    sd = ~sd(., na.rm = TRUE))) %>%
-  ungroup()
+  filter(season == "spring", year == 2008)
+
+names(jena_dat_years)
 
 jena_dat_years %>%
   gather(key = "spp", value = "species_number",
-         observed_species_mean, sowndiv, total_species_mean) %>%
-  mutate(spp = factor(spp, levels = c("sowndiv", "observed_species_mean", "total_species_mean"))) %>%
-  ggplot(mapping = aes(x = species_number, y = target_biomass_m_mean, colour = spp)) +
+         observed_species, sowndiv, total_species) %>%
+  mutate(spp = factor(spp, levels = c("sowndiv", "observed_species", "total_species"))) %>%
+  ggplot(mapping = aes(x = species_number, y = target_biomass_m, colour = spp)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   scale_colour_viridis_d() +
@@ -247,25 +244,27 @@ jena_dat_years %>%
 
 
 # plot the relationship between species pool diversity and ecosystem function
-ggplot(data = jena_dat_years %>% 
+fig_s3 <- 
+  ggplot(data = jena_dat_years %>% 
          filter(sowndiv < 60, sowndiv > 1),
-       mapping = aes(x = sowndiv, y = target_biomass_m_mean)) +
+       mapping = aes(x = sowndiv, y = target_biomass_m)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.5) +
   ylab("community biomass") +
-  xlab("species pool diversity") +
+  xlab("initial diversity") +
   theme_classic()
 
 # plot the relationship between species pool diversity and realised species richness
-ggplot(data = jena_dat_years %>% 
+fig_s2 <- 
+  ggplot(data = jena_dat_years %>% 
          filter(sowndiv < 60, sowndiv > 1),
-       mapping = aes(x = sowndiv, y = observed_species_mean)) +
+       mapping = aes(x = sowndiv, y = observed_species)) +
   geom_abline(intercept = 0, slope = 1, colour = "black", size = 0.1, linetype = "dashed") +
   geom_point(alpha = 0.6, shape = 16) +
   scale_x_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
   scale_y_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
   ylab("realised diversity") +
-  xlab("species pool diversity") +
+  xlab("initial diversity") +
   theme_classic()
 
 
@@ -289,6 +288,17 @@ jena_dat_samp$sowndiv %>%
 jena_dat_samp <- 
   jena_dat_samp %>%
   filter(sowndiv > 1)
+
+# how many plots are there
+jena_dat_samp %>%
+  nrow()
+
+jena_dat_samp$sowndiv %>%
+  unique()
+
+jena_dat_samp %>%
+  group_by(sowndiv) %>%
+  summarise(n = n())
 
 # Set-up ranges for the data
 spp_ascent <- 
@@ -344,27 +354,32 @@ sim_out <-
          sowndiv_min = min(sowndiv),
          sowndiv_max = max(sowndiv)) %>%
   mutate(initial_div_range = max(sowndiv) - min(sowndiv),
-         realised_div_range = max(observed_species_mean) - min(observed_species_mean),
-         min_realised = min(observed_species_mean),
-         max_realised = max(observed_species_mean)) %>%
+         realised_div_range = max(observed_species) - min(observed_species),
+         min_realised = min(observed_species),
+         max_realised = max(observed_species)) %>%
   mutate(species_pool = as.character(initial_div_range)) %>%
   ungroup()
-  
+
+# set a minimum realised diversity
+min_r <- 1
+
+sim_out <- 
+  sim_out %>%
+  filter(realised_div_range >= min_r)
 
 # extract linear model slope for the observed diversity gradient
 sim_out_slopes <- 
   sim_out %>% 
   group_by(replicate) %>%
-  mutate(target_biomass_m_mean = scale(target_biomass_m_mean),
-         observed_species_mean = scale(observed_species_mean)) %>% 
+  mutate(target_biomass_m = scale(target_biomass_m),
+         observed_species = scale(observed_species)) %>% 
   ungroup() %>%
   group_by(sowndiv_range, replicate) %>%
-  do(fit_sim = lm(target_biomass_m_mean ~ observed_species_mean, data = .)) %>%
+  do(fit_sim = lm(target_biomass_m ~ observed_species, data = .)) %>%
   tidy(fit_sim) %>% 
   ungroup() %>%
-  filter(term == "observed_species_mean") %>%
+  filter(term == "observed_species") %>%
   select(-statistic, -p.value)
-
 
 # join these slope data to the rest of the data
 sim_out <- 
@@ -381,12 +396,8 @@ sim_out <-
 
 # plot the relationship between initial diversity range and the observed diversity-function slope
 
-# set minimum realised diversity range
-min_r <- 1
-
 ord <- 
   sim_out %>%
-  filter(realised_div_range > min_r) %>%
   pull(initial_div_range) %>%
   unique() %>%
   sort()
@@ -394,7 +405,6 @@ ord
 
 rea <- 
   sim_out %>%
-  filter(realised_div_range > min_r) %>%
   pull(realised_div_range) %>%
   unique() %>%
   sort()
@@ -402,15 +412,13 @@ rea
 
 # check if low initial diversity values are biased
 sim_out %>%
-  filter(realised_div_range > min_r) %>%
   filter(initial_div_range == 0) %>%
   pull(sowndiv_max) %>%
   unique()
 
 
-j1 <- 
-  ggplot(data = sim_out %>%
-         filter(realised_div_range > min_r),
+fig_2a <- 
+  ggplot(data = sim_out,
        mapping = aes(x = initial_div_range, y = estimate, colour = realised_div_range)) +
   geom_jitter(alpha = 0.5, shape = 16, size = 4, width = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed") +
@@ -422,12 +430,17 @@ j1 <-
   theme_classic() +
   theme(legend.position="top")
 
-ggsave(filename = here("figures/jena_dat.png"), plot = j1,
-       height = 10, width = 12, dpi = 300, units = "cm")
-
+fig_s1 <- 
+  ggplot(data = sim_out) +
+  geom_jitter(aes(x = initial_div_range, y = sowndiv_min, group = initial_div_range )) +
+  geom_boxplot(aes(x = initial_div_range, y = sowndiv_min, group = initial_div_range )) +
+  scale_x_continuous(breaks = ord) +
+  xlab("initial diversity range") +
+  ylab("minimum initial diversity") +
+  theme_classic()
 
 # plot insets to show the slope calculation
-insets <- 
+fig_2i_iii <- 
   samp_dat %>%
   bind_rows(.id = "replicate") %>%
   group_by(replicate) %>%
@@ -435,13 +448,13 @@ insets <-
          sowndiv_min = min(sowndiv),
          sowndiv_max = max(sowndiv)) %>%
   mutate(initial_div_range = max(sowndiv) - min(sowndiv),
-         realised_div_range = max(observed_species_mean) - min(observed_species_mean)) %>%
+         realised_div_range = max(observed_species) - min(observed_species)) %>%
   mutate(species_pool = as.character(initial_div_range)) %>%
   ungroup() %>%
-  filter(realised_div_range > min_r)
+  filter(realised_div_range >= min_r)
 
 # check the sowndiv values when without any additional diversity range
-insets %>%
+fig_2i_iii %>%
   filter(initial_div_range == 0) %>%
   pull(sowndiv) %>%
   unique()
@@ -455,34 +468,36 @@ i_reps <-
   ungroup() %>%
   pull(replicate)
 
-insets %>%
+fig_2i_iii <- 
+  fig_2i_iii %>%
   filter(replicate %in% i_reps) %>%
   split(., .$replicate) %>%
   lapply(function (x) {
     
     ggplot(data = x,
-           mapping = aes(x = observed_species_mean, y = target_biomass_m_mean)) +
+           mapping = aes(x = observed_species, y = target_biomass_m)) +
       geom_point(size = 4) +
       geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.1) +
       ggtitle(paste0("initial_div_range_", x$initial_div_range[1]) ) +
       ylab("biomass") +
       xlab("realised diversity") +
-      theme_classic()
+      theme_classic() +
+      theme(axis.title = element_text(size = 20),
+            axis.text = element_text(size = 18))
     
   })
 
+jena_figs <- list(fig_s1, fig_s2, fig_s3, fig_2a, fig_2i_iii[[1]], fig_2i_iii[[2]], fig_2i_iii[[3]])
+names(jena_figs) <- c(1:length(jena_figs))
 
-
-
-# Example for printing multiple graphs
-jena_list <- list(j1, j2)
-
-for (i in seq_along(1:length(jena_list))){
-  ggsave(jena_list[[i]], 
-         filename = paste(paste("jena_plots_model", (i), sep = "_"), ".jpeg", sep = ""),
-         dpi = 300, units = "cm",
-         width = 10, height = 8)
+for (i in seq_along(1:length(jena_figs))) {
+  
+  ggsave(filename = paste0(here("figures"), "/jena_fig_", names(jena_figs)[i], ".png"), 
+         plot = jena_figs[[i]], dpi = 300)
 }
+
+
+
 
 
 
