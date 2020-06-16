@@ -27,7 +27,7 @@ rnorm_perfect <- function(n, mean = 0, sd = 1) {
 set.seed(555)
 
 # set up species abundances
-spp_abun <- c(200000, 40000, 30000, 10000)
+spp_abun <- c(200000, 25000, 30000, 10000)
 
 # set up species locations (i.e. means)
 spp_means <- c(0, 20, 35, -15)
@@ -70,7 +70,7 @@ fig_1 <-
   theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#666666", "#CCCCCC", "#000000")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 5000)) +
-  scale_x_continuous(limits = c(-100, 100)) +
+  scale_x_continuous(limits = c(-75, 75)) +
   theme(legend.position = "none",
         axis.text = element_blank(),
         axis.title = element_blank(),
@@ -88,7 +88,7 @@ fig_1a <-
   theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#000000")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 5000)) +
-  scale_x_continuous(limits = c(-53, 60)) +
+  scale_x_continuous(limits = c(-75, 75)) +
   theme(legend.position = "none",
         axis.text = element_blank(),
         axis.title = element_blank(),
@@ -105,7 +105,7 @@ fig_1b <-
   theme_classic() +
   scale_fill_manual(values=c("#666666", "#CCCCCC")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 5000)) +
-  scale_x_continuous(limits = c(-53, 60)) +
+  scale_x_continuous(limits = c(-75, 75)) +
   theme(legend.position = "none",
         axis.text = element_blank(),
         axis.title = element_blank(),
@@ -142,14 +142,14 @@ p2 <- ggplot(df2, aes(x = "", y = value, fill = group)) +
   theme(legend.position = "none")
 
 df3 <- data.frame(
-  group = c("A", "B", "C"),
-  value = c(2, 1, 1)
+  group = c("A", "C"),
+  value = c(2.5, 1)
 )
 
 p3 <- ggplot(df3, aes(x = "", y = value, fill = group)) +
   geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
   coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#FFFFFF", "#666666", "#CCCCCC")) +
+  scale_fill_manual(values=c("#FFFFFF", "#CCCCCC")) +
   theme_void() +
   theme(legend.position = "none")
 
