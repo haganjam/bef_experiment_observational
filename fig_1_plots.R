@@ -27,13 +27,13 @@ rnorm_perfect <- function(n, mean = 0, sd = 1) {
 set.seed(555)
 
 # set up species abundances
-spp_abun <- c(100000, 40000, 30000, 10000)
+spp_abun <- c(200000, 40000, 30000, 10000)
 
 # set up species locations (i.e. means)
-spp_means <- c(-10, 20, 35, -15)
+spp_means <- c(0, 20, 35, -15)
 
 # set up species standard deviations
-spp_sd <- c(10, 5, 5, 3)
+spp_sd <- c(25, 5, 5, 3)
 
 # run a loop to 
 spp <- vector("list", length = length(spp_abun))
@@ -70,11 +70,12 @@ fig_1 <-
   theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#666666", "#CCCCCC", "#000000")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 5000)) +
-  scale_x_continuous(limits = c(-53, 60)) +
+  scale_x_continuous(limits = c(-100, 100)) +
   theme(legend.position = "none",
         axis.text = element_blank(),
         axis.title = element_blank(),
         axis.ticks = element_blank())
+fig_1
 
 ggsave(filename = here("figures/fig_1.png"), plot = fig_1,
        dpi = 300)
