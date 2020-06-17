@@ -180,6 +180,114 @@ p5 <- ggplot(df5, aes(x = "", y = value, fill = group)) +
 
 ggarrange(p1, p2, p3, p4, p5)
 
+df6 <- data.frame(
+  group = c("A", "C"),
+  value = c(1, 1)
+)
+
+p6 <- ggplot(df6, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FFFFFF", "#CCCCCC")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df7 <- data.frame(
+  group = c("A","B","D"),
+  value = c(1, 1, 1)
+)
+
+p7 <- ggplot(df7, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FFFFFF", "#666666", "#000000")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df8 <- data.frame(
+  group = c("A","B","C","D"),
+  value = c(1, 0.05, 0.3, 0.05)
+)
+
+p8 <- ggplot(df8, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FFFFFF", "#666666", "#CCCCCC", "#000000")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df9 <- data.frame(
+  group = c("B","C","D"),
+  value = c(0.05, 0.05, 0.05)
+)
+
+p9 <- ggplot(df9, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#666666", "#CCCCCC", "#000000")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df10 <- data.frame(
+  group = c("B","C","D"),
+  value = c(0.05, 0.10, 0.05)
+)
+
+p10 <- ggplot(df10, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#666666", "#CCCCCC", "#000000")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df11 <- data.frame(
+  group = c("B","D"),
+  value = c(0.05, 0.05)
+)
+
+p11 <- ggplot(df11, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#666666", "#000000")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df12 <- data.frame(
+  group = c("A","B"),
+  value = c(0.05, 0.05)
+)
+
+p12 <- ggplot(df12, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FFFFFF", "#666666")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df13 <- data.frame(
+  group = c("A","D"),
+  value = c(0.05, 0.05)
+)
+
+p13 <- ggplot(df13, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FFFFFF", "#000000")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+df14 <- data.frame(
+  group = c("B", "C"),
+  value = c(1, 1.3)
+)
+
+p14 <- ggplot(df14, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#666666", "#CCCCCC")) +
+  theme_void() +
+  theme(legend.position = "none")
+
 
 # make singular charts
 cols <- c("#FFFFFF", "#666666", "#CCCCCC", "#000000")
@@ -204,7 +312,7 @@ for (i in seq_along(1:length(cols))) {
 }
 
 pies <- 
-  ggarrange(p1, p2, p3, p4, p5,
+  ggarrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14,
           df_plots[[1]], df_plots[[2]], df_plots[[3]], df_plots[[4]])
 
 ggsave(filename = here("figures/fig_1_pies.png"), plot = pies,
