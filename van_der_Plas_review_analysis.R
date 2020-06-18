@@ -125,6 +125,9 @@ other_dat <-
 vand_dat_c <- 
   inner_join(vand_dat_c, other_dat, by = c("Relationship_nr") )
 
+View(vand_dat_c)
+
+
 # export an excel file to fill in the spatial grain and spatial extent information from the papers
 
 # how many papers are there to go through?
