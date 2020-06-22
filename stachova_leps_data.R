@@ -42,7 +42,7 @@ f1 <-
                width = 4) +
   scale_x_continuous(breaks = c(seq(from = 0, to = 100, by = 10)) ) +
   ylab("total biomass") +
-  xlab("species pool size") +
+  xlab("initial diversity") +
   theme_classic()
 
 
@@ -60,7 +60,7 @@ f2 <-
   scale_y_continuous(limits = c(1, 7.1)) +
   scale_x_continuous(breaks = c(seq(from = 0, to = 100, by = 10)) ) +
   ylab("realised diversity") +
-  xlab("species pool size") +
+  xlab("initial diversity") +
   theme_classic() +
   theme(axis.title = element_text(size = 20),
         axis.text = element_text(size = 18))
