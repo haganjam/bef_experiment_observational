@@ -29,25 +29,31 @@ summary(fos_com_raw)
 
 fos_bio_1 <- 
   fos_bio_raw %>%
-  mutate(Plot = as.character(Plot)) %>%
+  mutate(Unit = as.character(Unit)) %>%
   filter(Year > 2001, N == 0, P == 0)
 
 ggplot(data = fos_bio_1,
-       mapping = aes(x = Year, y = Live_Biomass, colour = Plot)) +
+       mapping = aes(x = Year, y = Live_Biomass, colour = Unit)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   facet_wrap(~Seed) +
   theme_classic()
 
+ggplot(data = fos_bio_1,
+       mapping = aes(x = Seed, y = Live_Biomass, colour = as.character(Year) )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+
 bio_trends <- 
   fos_bio_1 %>%
-  split(., .$Plot) %>%
+  split(., .$Unit) %>%
   lapply(., function(x) { 
     lm(Live_Biomass ~ Year, data = x) %>%
       tidy() }) %>%
-  bind_rows(.id = "Plot") %>%
+  bind_rows(.id = "Unit") %>%
   filter(term == "Year") %>%
-  select(Plot, estimate) %>%
+  select(Unit, estimate) %>%
   mutate(bio_est = estimate) %>%
   select(-estimate)
 
@@ -56,11 +62,6 @@ bio_trends <-
 
 spp_names <- 
   names(fos_com_1[, -c(1:10)])
-
-fos_com_1 <- 
-  fos_com_raw %>%
-  mutate(Plot = as.character(Plot)) %>%
-  filter(N == 0, P == 0)
 
 fos_com_1 %>%
   gather(all_of(spp_names), 
@@ -71,7 +72,7 @@ fos_com_1 %>%
          mapping = aes(x = Year, y = cover, colour = species)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~Plot) +
+  facet_wrap(~Unit) +
   theme_classic() +
   theme(legend.position = "none")
 
@@ -82,10 +83,10 @@ spp_plot <-
   gather(all_of(spp_names), 
          key = "species",
          value = "cover") %>%
-  split(., .$Plot)
+  split(., .$Unit)
 
 spp_trends <- vector("list", length = length(spp_plot))
-names(spp_trends) <- seq_along(1:length(spp_plot))
+names(spp_trends) <- names(spp_plot)
 
 for (i in seq_along(1:length(spp_plot))) {
   
@@ -98,31 +99,133 @@ for (i in seq_along(1:length(spp_plot))) {
     bind_rows(.id = "species")
 }
 
-spp_trends <- bind_rows(spp_trends, .id = "Plot")
+spp_trends <- bind_rows(spp_trends, .id = "Unit")
+
 
 # subset out the species that have zero trends
-spp_trends <- 
+spp_inc <- 
   spp_trends %>%
   filter(term == "Year") %>%
-  filter(estimate != 0) %>%
-  filter(p.value < 0.05)
+  filter(estimate > 0.5, p.value < 0.05)
+
+spp_dec <- 
+  spp_trends %>%
+  filter(term == "Year") %>%
+  filter(estimate < -0.5, p.value < 0.05)
+
+spp_inc_dec <- 
+  bind_rows(spp_inc, spp_dec)
+
+hist(spp_inc_dec$estimate)
 
 
 ### examine which species explains increases or decreases in biomass
 
-bio_spp <- full_join(spp_trends, bio_trends, by = c("Plot"))
+bio_spp <- full_join(spp_inc_dec, bio_trends, by = c("Unit"))
 
-bio_spp <- 
-  bio_spp %>%
-  select(Plot, species) %>%
-  split(., .$Plot)
+mod_vars <- 
+  fos_bio_1 %>%
+  filter(Year == max(Year)) %>%
+  select(Unit, Block, Gradient, Plot, Seed, N, P, Live_Biomass, Litter_Biomass) %>%
+  mutate(total_biomass = (Live_Biomass + Litter_Biomass))
 
-z <- zoo()
+trend_dat <- full_join(mod_vars, bio_spp, by = "Unit")
 
-for(i in 1:length(bio_spp)) {
-  z <- merge(z, bio_spp[[i]] %>% select(species))
-  }
-names(z) <- names(bio_spp)
-z <- as_tibble(z)
+ggplot(data = trend_dat,
+       mapping = aes(x = Seed, y = bio_est)) +
+  geom_point() +
+  theme_classic()
 
-z
+ggplot(data = trend_dat,
+       mapping = aes(x = Seed, y = Live_Biomass)) +
+  geom_point() +
+  theme_classic()
+
+
+# which species are increasing? Are these species that were added?
+
+sown_spp <- read_csv(here("data/sown_spp.csv"))
+
+# all species names
+spp_names # n = 173
+
+# sown species names
+sown_spp_names <- unique(sown_spp$Species) 
+sown_spp_names # n = 34
+
+# non-sown species names
+non_sown_spp <- spp_names[ !(spp_names %in% sown_spp_names) ]
+non_sown_spp # n = 145
+
+
+# which species are increasing in the different units?
+spp_inc
+
+increasers <- 
+  spp_inc %>%
+  select(Unit, species) %>%
+  split(., .$Unit) %>%
+  lapply(., function(x) { x %>% mutate(pres = 1) })
+
+# add the full species list
+sown_names <- 
+  tibble(Unit = "all", species = unique(sown_spp_names))
+
+for(i in seq_along(1:length(increasers))) {
+  sown_names <- left_join(sown_names, 
+                         select(increasers[[i]], species, pres), 
+                         by = "species")
+}
+
+names(sown_names) <- c("Unit", "species", names(increasers))
+
+sown_names
+
+
+
+
+spp_inc
+
+increasers <- 
+  spp_inc %>%
+  select(Unit, species) %>%
+  split(., .$Unit)
+
+inc_names <- zoo()
+
+for(i in 1:length(increasers)) {
+  inc_names <- merge(inc_names, increasers[[i]] %>% select(species))
+}
+names(inc_names) <- names(increasers)
+
+as_tibble(inc_names)
+
+
+# which species are decreasing in the different units?
+spp_dec
+
+decreasers <- 
+  spp_dec %>%
+  select(Unit, species) %>%
+  split(., .$Unit) %>%
+  lapply(., function(x) { x %>% mutate(pres = 1) })
+
+# add the full species list
+all_names <- 
+  tibble(Unit = "all", species = unique(spp_dec$species))
+
+for(i in seq_along(1:length(decreasers))) {
+  all_names <- left_join(all_names, 
+                     select(decreasers[[i]], species, pres), 
+                     by = "species")
+}
+
+names(all_names) <- c("Unit", "species", names(decreasers))
+
+all_names %>%
+  mutate_all(~ if_else(is.na(.), 0, .))
+
+
+
+
+
