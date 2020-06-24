@@ -3,6 +3,16 @@
 
 # Title: Foster data seed addition re-analysis
 
+
+# next to do:
+
+# plan the next moves in this story...
+
+# there is something that can be done here but need to think about how to show it properly
+
+# need to see which species are increasing, are they sown and do they contribute biomass?
+
+
 # load relevant libraries
 library(readr)
 library(dplyr)
@@ -157,6 +167,12 @@ sown_spp_names # n = 34
 non_sown_spp <- spp_names[ !(spp_names %in% sown_spp_names) ]
 non_sown_spp # n = 145
 
+species_list <- 
+  left_join(tibble(species = spp_names), 
+          tibble(species = sown_spp_names, sown = c("yes")),
+          by = "species") %>%
+  mutate(sown = if_else(is.na(sown), "no", sown))
+
 
 # which species are increasing in the different units?
 spp_inc
@@ -168,37 +184,24 @@ increasers <-
   lapply(., function(x) { x %>% mutate(pres = 1) })
 
 # add the full species list
-sown_names <- 
-  tibble(Unit = "all", species = unique(sown_spp_names))
+inc_spp <- species_list
 
 for(i in seq_along(1:length(increasers))) {
-  sown_names <- left_join(sown_names, 
+  inc_spp <- left_join(inc_spp, 
                          select(increasers[[i]], species, pres), 
                          by = "species")
 }
 
-names(sown_names) <- c("Unit", "species", names(increasers))
+names(inc_spp) <- c("species", "sown", names(increasers))
 
-sown_names
-
-
-
-
-spp_inc
-
-increasers <- 
-  spp_inc %>%
-  select(Unit, species) %>%
-  split(., .$Unit)
-
-inc_names <- zoo()
-
-for(i in 1:length(increasers)) {
-  inc_names <- merge(inc_names, increasers[[i]] %>% select(species))
-}
-names(inc_names) <- names(increasers)
-
-as_tibble(inc_names)
+# are sown increasing more than non-sown species?
+inc_spp %>%
+  mutate_at(vars(names(increasers)), ~ if_else(is.na(.), 0, 1)) %>%
+  gather(names(increasers),
+         key = "Unit", value = "presence") %>%
+  group_by(Unit, sown) %>%
+  summarise(total = sum(presence)) %>%
+  ungroup()
 
 
 # which species are decreasing in the different units?
