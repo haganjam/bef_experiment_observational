@@ -28,7 +28,7 @@ fig_3 <-
                 direction = rep(c("-"," ", "+"), 2)),
        mapping = aes(x = stratified, y = proportion, fill = slope_direction)) +
   geom_bar(width = 0.4, stat = "identity", position = position_dodge(width=0.5),
-           colour = "black", alpha = 0.8) +
+           colour = "black", alpha = 0.4) +
   geom_text(aes(label = direction), position=position_dodge(width=0.5), vjust = -0.5) +
   scale_fill_manual(values = c("#CC0000", "#FFFF00", "#00CC00")) +
   ylab("proportion of slopes") +
@@ -70,18 +70,22 @@ spat_ex <-
   gather(pos, neu, neg, key = "relationship", value = "slope") %>%
   mutate(slope_proportion = slope/total_n)
 
+spat_ex %>%
+  group_by(spatial_extent) %>%
+  summarise(total_n = min(total_n))
+
 # plot out the data 
 
 # first reorder the factors
 spat_ex$spatial_extent <- factor(spat_ex$spatial_extent,
-                                 levels = c("regional", "landscape", "continental", "global"))
+                                 levels = c("landscape", "regional", "continental", "global"))
 
 fig_3b <- 
   ggplot(data = spat_ex %>%
          mutate(direction = rep(c("+"," ", "-"), each = 4)),
        mapping = aes(x = spatial_extent, y = slope_proportion, fill = relationship)) +
   geom_bar(width = 0.4, stat = "identity", position = position_dodge(width=0.5),
-           colour = "black", alpha = 0.8) +
+           colour = "black", alpha = 0.4) +
   geom_text(aes(label = direction), position = position_dodge(width=0.5), vjust = -0.5) +
   scale_fill_manual(values = c("#CC0000", "#FFFF00", "#00CC00")) +
   ylab("") +
