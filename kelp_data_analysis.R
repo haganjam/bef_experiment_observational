@@ -106,9 +106,29 @@ kelp_ana %>%
 # remove the rows with missing values
 kelp_ana <- 
   kelp_ana %>%
-  filter_at(vars(c("AFDM", "SP_CODE")), any_vars(. != -99999))
+  filter_at(vars(c("AFDM", "SP_CODE")), all_vars(. != -99999))
 
-# summarise for the two transects
+kelp_ana %>%
+  summary()
+
+kelp_ana %>%
+  filter(AFDM < 0)
+
+kelp_ana %>%
+  filter(SP_CODE != "MAPY") %>%
+  filter(grepl("kelp", COMMON_NAME)) %>%
+  pull(SCIENTIFIC_NAME) %>%
+  unique()
+
+kelp_ana$TAXON_GENUS %>%
+  unique()
+
+kelp_ana %>%
+  filter(grepl("Macrocystis", TAXON_GENUS)) %>%
+  pull(SCIENTIFIC_NAME) %>%
+  unique()
+
+# summarise for the two transects at each site for each year
 kelp_ana_sum <- 
   kelp_ana %>%
   group_by(SITE, YEAR, SP_CODE) %>%
@@ -122,12 +142,129 @@ kelp_ana_sum <-
 # add the gamma diversity across years
 
 kelp_ana_sum %>%
-  
+  group_by(SITE, YEAR) %>%
+  summarise(alpha_diversity = sum(decostand(AFDM, method = "pa"), na.rm = TRUE),
+         comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(data = .,
+         mapping = aes(x = alpha_diversity, y = comm_biomass, colour = as.character(YEAR) )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+kelp_ana_sum %>%
+  group_by(SITE, YEAR) %>%
+  mutate(comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(AFDM > 0) %>%
+  group_by(SITE) %>%
+  summarise(gamma_diversity = length(unique(SP_CODE)),
+            comm_biomass = mean(comm_biomass, na.rm = TRUE)) %>%
+  select(-SITE) %>%
+  ggplot(data = .,
+         mapping = aes(x = gamma_diversity, y = comm_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_classic()
+
+
+# calculate relative abundances for each year and each site
+kelp_ana_sum %>% 
+  group_by(SITE, YEAR) %>%
+  mutate(total_AFDM = sum(AFDM, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(SP_CODE_rel = (AFDM/total_AFDM)*100 ) %>%
+  filter(SP_CODE_rel > 5) %>%
+  split(., .$SITE) %>%
+  lapply(., function(x) {
+    
+    ggplot(data = x, mapping = aes(x = YEAR, y = AFDM, colour = SP_CODE)) +
+      geom_point() +
+      facet_wrap(~SITE) +
+      theme_classic() 
+    }
+  )
+
+
+# do these analyses without the giant kelp (MAPY) and unidentified juvenile kelp (BLD)
+
+kelp_ana_sum %>%
+  filter(!(SP_CODE %in% c("MAPY", "BLD"))) %>%
+  group_by(SITE, YEAR) %>%
+  summarise(alpha_diversity = sum(decostand(AFDM, method = "pa"), na.rm = TRUE),
+            comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
+  ungroup() %>%
+  ggplot(data = .,
+         mapping = aes(x = alpha_diversity, y = comm_biomass, colour = as.character(YEAR) )) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+gam_no_kelp <- 
+  kelp_ana_sum %>%
+  filter(!(SP_CODE %in% c("MAPY", "BLD"))) %>%
+  group_by(SITE, YEAR) %>%
+  mutate(comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
+  ungroup() %>%
+  filter(AFDM > 0) %>%
+  group_by(SITE) %>%
+  summarise(gamma_diversity = length(unique(SP_CODE)),
+            comm_biomass = mean(comm_biomass, na.rm = TRUE))
+
+ggplot(data = gam_no_kelp,
+         mapping = aes(x = gamma_diversity, y = comm_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_classic()
 
 
 
+# plot species' biomass through time
+kelp_ana_sum %>% 
+  filter(!(SP_CODE %in% c("MAPY", "BLD"))) %>%
+  group_by(SITE, YEAR) %>%
+  mutate(total_AFDM = sum(AFDM, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(SP_CODE_rel = (AFDM/total_AFDM)*100 ) %>%
+  filter(SP_CODE_rel > 5) %>%
+  split(., .$SITE) %>%
+  lapply(., function(x) {
+    
+    ggplot(data = x, mapping = aes(x = YEAR, y = AFDM, colour = SP_CODE)) +
+      geom_point() +
+      facet_wrap(~SITE) +
+      theme_classic() 
+  }
+  )
 
+# are the dominant species different across sites in a given year
+dom_spp <- 
+  kelp_ana_sum %>% 
+  filter(!(SP_CODE %in% c("MAPY", "BLD"))) %>%
+  group_by(SITE, YEAR) %>%
+  mutate(total_AFDM = sum(AFDM, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(SP_CODE_rel = (AFDM/total_AFDM)*100 ) %>%
+  group_by(SITE, YEAR) %>%
+  mutate(SP_max = max(SP_CODE_rel)) %>%
+  ungroup() %>%
+  filter(SP_CODE_rel == SP_max)
 
+# do dominant species change in space?
+dom_spp %>%
+  split(., .$YEAR) %>%
+  lapply(., function(x) { unique(x$SP_CODE)})
+
+# do dominant species change in time?
+spp_turn <- 
+  dom_spp %>%
+  split(., .$SITE) %>%
+  lapply(., function(x) { unique(x$SP_CODE) %>% length()}) %>%
+  unlist() %>%
+  tibble::enframe(., name = "SITE", value = "spp_turn")
+
+full_join(gam_no_kelp, spp_turn) %>%
+  ggplot(data = .,
+         mapping = aes(x = gamma_diversity, y = spp_turn)) +
+  geom_point()
 
 
 
