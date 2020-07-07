@@ -164,11 +164,23 @@ sub_names <-
 
 # check whether all relationship numbers were accounted for
 
+# read in the completed data file
+spat_comp <- read_delim(here("data/van_der_Plas_2019_spatial_extent_complete.csv"), delim = ",")
 
+# check if all relationship numbers were evaluated
+unique(spat_comp$Relationship_nr) %>%
+  length()
+  
+unique(vand_dat_c$Relationship_nr) %>%
+  length()
 
+tibble(x = sort(unique(spat_comp$Relationship_nr)),
+       y = sort(unique(vand_dat_c$Relationship_nr))) %>%
+  mutate(id = if_else(x == y, 0, 1)) %>%
+  pull(id) %>%
+  sum(.)
 
-
-
+# all relationship numbers were evaluated
 
 
 
