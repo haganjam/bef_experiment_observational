@@ -136,4 +136,28 @@ spat_with <-
 
 
 
+# randomisation tests to account for possible non-independence of slopes from the same study...
+
+spat_ex_raw %>%
+  group_by(`paper number`) %>%
+  slice_sample(., n = 1) %>%
+  ungroup() %>%
+  group_by(spatial_extent) %>%
+  mutate(pos = if_else(bef_relationship == "Positive", 1, 0),
+         neu = if_else(bef_relationship == "Neutral", 1, 0),
+         neg = if_else(bef_relationship == "Negative", 1, 0)) %>%
+  summarise_at(vars(c("pos", "neu", "neg")), ~sum(., na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(total_n = pos + neu + neg) %>%
+  gather(pos, neu, neg, key = "relationship", value = "slope") %>%
+  mutate(slope_proportion = slope/total_n)
+
+
+
+
+
+
+
+
+
 
