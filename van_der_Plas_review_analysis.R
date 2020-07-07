@@ -127,6 +127,10 @@ vand_dat_c <-
 
 View(vand_dat_c)
 
+vand_dat_c %>%
+  filter(`paper number` == 125) %>%
+  View()
+
 
 # export an excel file to fill in the spatial grain and spatial extent information from the papers
 

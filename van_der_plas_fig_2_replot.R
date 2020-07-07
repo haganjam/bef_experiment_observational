@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Re-plotting fig. 2 in van der Plas (2019)
+# Title: Re-plotting fig. 2 in van der Plas (2019) and performing the habitat comparison
 
 # load relevant libraries
 library(readr)
@@ -40,6 +40,7 @@ fig_3 <-
 ggsave(filename = here("figures/fig_3.png"), plot = fig_3, dpi = 300)
 
 
+
 # load the spatial extent data
 spat_ex_raw <- read_csv(here("data/fig_2_van_der_plas_spatial_extent.csv"))
 
@@ -73,6 +74,7 @@ spat_ex <-
 spat_ex %>%
   group_by(spatial_extent) %>%
   summarise(total_n = min(total_n))
+
 
 # plot out the data 
 
