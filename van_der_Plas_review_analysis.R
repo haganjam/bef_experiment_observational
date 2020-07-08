@@ -381,7 +381,62 @@ fig_2b_obs <-
   mutate(slope_proportion = slope/total_n)
 
 
+# get the randomised proportions for 1000 different runs
 
+# how many papers have more than one slope?
+fig_2b_ana %>%
+  group_by(`paper number`) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  filter(n > 1) %>%
+  nrow()
+
+
+# set the number of replicates
+r <- 1000
+
+# set up an output list
+fig_2b_ran <- vector("list", length = r)
+
+for (i in seq_along(1:r) ) {
+  
+  x <- 
+    fig_2b_ana %>%
+    group_by(`paper number`) %>%
+    slice_sample(., n = 1) %>%
+    ungroup()
+  
+  fig_2b_ran[[i]] <- 
+    x %>%
+    group_by(spatial_extent) %>%
+    summarise_at(vars(c("pos", "neu", "neg")), ~sum(., na.rm = TRUE)) %>%
+    ungroup() %>%
+    mutate(total_n = pos + neu + neg) %>%
+    gather(pos, neu, neg, key = "relationship", value = "slope") %>%
+    mutate(slope_proportion = slope/total_n)
+  
+}
+
+fig_2b_ran <- 
+  bind_rows(fig_2b_ran, .id = "run")
+
+
+fig_2b <- 
+  ggplot() +
+  geom_violin(data = fig_2b_ran,
+              mapping = aes(x = spatial_extent, y = slope_proportion, fill = relationship), 
+              alpha = 0.7, bw = 0.025, position = position_dodge(width=0.3)) +
+  geom_point(data = fig_2b_obs,
+             mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship),
+             position = position_dodge(width = 0.3),
+             size = 3.5, shape = 21, colour = "black", fill = "red") +
+  scale_fill_viridis_d() +
+  ylab("proportion of slopes") +
+  xlab("") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 11, colour = "black"))
+
+fig_2b
 
 
 
