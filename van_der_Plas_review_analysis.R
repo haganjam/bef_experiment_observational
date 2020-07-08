@@ -14,11 +14,15 @@ library(RColorBrewer)
 library(viridis)
 library(here)
 library(vegan)
+library(ggpubr)
 
 # make a folder to export figures
 if(! dir.exists(here("figures"))){
   dir.create(here("figures"))
 }
+
+
+### code for creating a template to fill in the grain and extent information
 
 # load the van der Plas data
 vand_dat_raw <- read_delim(here("data/van_der_Plas_2019_systematic_review.csv"), delim = ",")
@@ -165,6 +169,8 @@ sub_names <-
 
 
 
+### figure 2 analysis
+
 # import the dataset with the spatial extent and grain information filled in
 
 # check whether all relationship numbers were accounted for
@@ -213,6 +219,12 @@ fig_2a_raw$`paper number` %>%
   unique() %>%
   length()
 
+fig_2a_raw$Relationship_nr %>%
+  unique() %>%
+  length()
+
+# overall there are 246 slopes
+
 # 111 papers and 45 have more than one bef slope
 
 
@@ -242,7 +254,7 @@ fig_2a_ran <-
   bind_rows(fig_2a_ran, .id = "run")
 
 
-# summarise this to obtain proportions for the observed data
+# get proportions in the observed data
 
 fig_2a_obs <- 
   fig_2a_raw %>%
@@ -254,10 +266,13 @@ fig_2a <-
   ggplot() +
   geom_violin(data = fig_2a_ran,
               mapping = aes(x = bef_relationship, y = proportion, fill = bef_relationship),
-              alpha = 0.7, bw = 0.005) +
+              alpha = 0.7, bw = 0.005, position = position_dodge(width=0.3)) +
   geom_point(data = fig_2a_obs,
              mapping = aes(x = bef_relationship, y = proportion),
-             colour = "black", size = 3.5, shape = 21, fill = "red") +
+             colour = "black", size = 4.5, shape = 21, fill = "white") +
+  geom_text(data = fig_2a_obs,
+            mapping = aes(x = bef_relationship, y = proportion, label = direction), 
+            position = position_dodge(width = 0.3)) +
   scale_fill_viridis_d() +
   ylab("proportion of slopes") +
   xlab("") +
@@ -266,7 +281,6 @@ fig_2a <-
         axis.text.x = element_text(size = 11, colour = "black"))
 
 fig_2a
-
 
 
 ### figure 2b
@@ -280,17 +294,34 @@ fig_2a
 fig_2b_raw <- 
   spat_comp %>%
   filter(include == "yes") %>%
-  mutate(direction = if_else( bef_relationship == "Positive", "+",
-                              if_else( bef_relationship == "Negative", "-", " ")),
-         bef_relationship = if_else( bef_relationship == "Positive", "positive",
+  mutate(bef_relationship = if_else( bef_relationship == "Positive", "positive",
                                      if_else( bef_relationship == "Negative", "negative", "neutral")),
          spatial_extent = if_else(spatial_extent == "landscape ", "landscape", spatial_extent))
+
+fig_2b_raw$`paper number` %>%
+  unique() %>%
+  length()
+
+fig_2b_raw %>%
+  group_by(`paper number`) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) %>%
+  nrow()
 
 fig_2b_raw$Relationship_nr %>%
   unique() %>%
   length()
 
+fig_2b_raw %>%
+  group_by(spatial_extent) %>%
+  summarise(n = n())
+
+
+
 # we obtained information on spatial extent for 231 relationships
+
+# this came from 106 papers and 42 of those had multiple bef slopes associated with it
+
 
 # does the classification represent spatial extent?
 spat_clas <- 
@@ -357,6 +388,7 @@ ggsave(filename = here("figures/fig_s1.png"), plot = fig_s1, dpi = 300,
        width = 14, height = 10, units = "cm")
 
 
+# continue with plotting of figure 2b
 
 # add columns for neutral, negative and positive slopes
 fig_2b_ana <- 
@@ -378,18 +410,13 @@ fig_2b_obs <-
   ungroup() %>%
   mutate(total_n = pos + neu + neg) %>%
   gather(pos, neu, neg, key = "relationship", value = "slope") %>%
-  mutate(slope_proportion = slope/total_n)
+  mutate(slope_proportion = slope/total_n) %>%
+  mutate(direction = if_else( relationship == "pos", "+",
+                              if_else( relationship == "neg", "-", " ")))
+
 
 
 # get the randomised proportions for 1000 different runs
-
-# how many papers have more than one slope?
-fig_2b_ana %>%
-  group_by(`paper number`) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  filter(n > 1) %>%
-  nrow()
-
 
 # set the number of replicates
 r <- 1000
@@ -428,9 +455,12 @@ fig_2b <-
   geom_point(data = fig_2b_obs,
              mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship),
              position = position_dodge(width = 0.3),
-             size = 3.5, shape = 21, colour = "black", fill = "white") +
+             size = 4.5, shape = 21, colour = "black", fill = "white") +
+  geom_text(data = fig_2b_obs,
+            mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship, label = direction), 
+            position = position_dodge(width = 0.3)) +
   scale_fill_viridis_d() +
-  ylab("proportion of slopes") +
+  ylab("") +
   xlab("") +
   theme_classic() +
   theme(legend.position = "none",
@@ -438,7 +468,18 @@ fig_2b <-
 
 fig_2b
 
-# add labels and export this figure
+
+# export figure 2
+
+fig_2 <- 
+  ggarrange(fig_2a, fig_2b, labels = c("(a)", "(b)"),
+            font.label = list(size = 10, color = "black", face = "plain", family = NULL),
+            widths = c(1, 1.9) )
+
+fig_2
+
+ggsave(filename = here("figures/fig_2.png"), plot = fig_2, dpi = 300,
+       width = 18, height = 10, units = "cm")
 
 
 
