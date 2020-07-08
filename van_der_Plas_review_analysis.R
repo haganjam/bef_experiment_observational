@@ -428,7 +428,7 @@ fig_2b <-
   geom_point(data = fig_2b_obs,
              mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship),
              position = position_dodge(width = 0.3),
-             size = 3.5, shape = 21, colour = "black", fill = "red") +
+             size = 3.5, shape = 21, colour = "black", fill = "white") +
   scale_fill_viridis_d() +
   ylab("proportion of slopes") +
   xlab("") +
@@ -438,6 +438,7 @@ fig_2b <-
 
 fig_2b
 
+# add labels and export this figure
 
 
 
