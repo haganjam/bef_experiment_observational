@@ -97,6 +97,15 @@ kelp_ana <-
   select(-PERCENT_COVER, -DENSITY, -WM_GM2, -DRY_GM2,
          -SFDM)
 
+# check if all species codes are recorded for each site
+kelp_ana %>%
+  group_by(SITE, YEAR) %>%
+  summarise(spp = length(unique(SP_CODE))) %>%
+  pull(spp)
+
+# all species codes are recorded each year at each site and just ticked off
+
+
 # sum up the transects at each site-year combination
 
 # check if there are missing values
@@ -135,35 +144,102 @@ kelp_ana_sum <-
   summarise(AFDM = sum(AFDM, na.rm = TRUE)) %>%
   ungroup()
 
+# there are two years at the AHND site 2017 and 2019 with zeros for all algae species
+# remove these for now
+kelp_ana_sum <- 
+  kelp_ana_sum %>%
+  filter(!(SITE == "AHND" & YEAR %in% c(2017, 2019)) )
+
 
 # work with the summarised data
 
-# add the local alpha diversity for each year
-# add the gamma diversity across years
 
-kelp_ana_sum %>%
+# examine the relationships between alpha diversity and function
+alpha_div <- 
+  kelp_ana_sum %>%
   group_by(SITE, YEAR) %>%
   summarise(alpha_diversity = sum(decostand(AFDM, method = "pa"), na.rm = TRUE),
-         comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
+            comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
   ungroup() %>%
-  ggplot(data = .,
+  filter( !(YEAR %in% c(2017, 2019)) ) 
+
+ggplot(data = alpha_div,
          mapping = aes(x = alpha_diversity, y = comm_biomass, colour = as.character(YEAR) )) +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_colour_viridis_d() +
+  theme_classic() +
+  theme(legend.position = "none")
 
+
+# examine the relationship between temporal gamma diversity function
 kelp_ana_sum %>%
-  group_by(SITE, YEAR) %>%
-  mutate(comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
-  ungroup() %>%
-  filter(AFDM > 0) %>%
   group_by(SITE) %>%
-  summarise(gamma_diversity = length(unique(SP_CODE)),
-            comm_biomass = mean(comm_biomass, na.rm = TRUE)) %>%
-  select(-SITE) %>%
-  ggplot(data = .,
-         mapping = aes(x = gamma_diversity, y = comm_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
+  summarise(years = length(unique(YEAR)))
+
+# one site has only 17 years of data so we need to correct for this:
+
+# calculate temporal gamma diversity
+min_years <- 
+  kelp_ana_sum %>%
+  group_by(SITE) %>%
+  summarise(n_years = length(unique(YEAR))) %>%
+  pull(n_years) %>%
+  min()
+
+
+# set-up number of randomisations
+r <- 100
+
+# set-up output lists
+
+com_bio <- vector("list", length = r)
+temp_gamma <- vector("list", length = r)
+
+for(i in seq_along(1:r)) {
+  
+  # calculate community biomass in each year at each site
+  com_bio[[i]] <-
+    kelp_ana_sum %>%
+    group_by(SITE, YEAR) %>%
+    summarise(comm_biomass = sum(AFDM, na.rm = TRUE), .groups = "drop") %>%
+    group_by(SITE) %>%
+    slice_sample(., n = min_years, replace = TRUE) %>%
+    summarise(comm_biomass = mean(comm_biomass, na.rm = TRUE), .groups = "drop")
+  
+  z <- 
+    kelp_ana_sum %>%
+    spread(key = SP_CODE, value = AFDM) %>%
+    select(-YEAR) %>%
+    group_by(SITE) %>%
+    slice_sample(., n = min_years, replace = TRUE) %>%
+    summarise(across(.cols = everything(), ~sum(.x, na.rm = TRUE)), .groups = "keep") %>%
+    mutate(across(.cols = everything(), ~as.numeric(decostand(.x, method = "pa")) )) %>%
+    ungroup()
+  
+  temp_gamma[[i]] <- 
+    tibble(SITE = z$SITE,
+         temporal_gamma = rowSums(select(z, -SITE)))
+}
+
+gamma_bio <- 
+  full_join(bind_rows(com_bio, .id = "replicate"),
+          bind_rows(temp_gamma, .id = "replicate"),
+          by = c("replicate", "SITE") ) %>%
+  group_by(SITE) %>%
+  summarise(biomass = mean(comm_biomass, na.rm = TRUE),
+            biomass_sd = sd(comm_biomass, na.rm = TRUE),
+            temporal_gamma = mean(temporal_gamma, na.rm = TRUE))
+
+ggplot() +
+  geom_point(data = gamma_bio,
+             mapping = aes(x = temporal_gamma, y = biomass)) +
+  geom_errorbar(data = gamma_bio,
+                mapping = aes(x = temporal_gamma, ymin = biomass-biomass_sd, ymax = biomass+biomass_sd),
+                width = 0.1) +
+  geom_smooth(data = gamma_bio,
+              mapping = aes(x = temporal_gamma, y = biomass ),
+              method = "lm", alpha = 0.2) +
   theme_classic()
 
 
