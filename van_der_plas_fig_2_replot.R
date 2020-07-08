@@ -17,7 +17,7 @@ library(vegan)
 library(ggpubr)
 
 
-# load the species pool data
+# load van der plas replot data
 van_fig_3_raw <- read_csv(here("data/van_der_plas_replot_data.csv"))
 
 van_fig_3 <- 
