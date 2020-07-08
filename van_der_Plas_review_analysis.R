@@ -61,6 +61,11 @@ vand_dat <-
 
 vand_dat
 
+# how many bef slopes are there that controlled for abiotic factors?
+vand_dat$Relationship_nr %>%
+  unique() %>%
+  length()
+
 # isolate relevant variables
 rel_vars <- c( names(vand_dat[, 1:25]), names(vand_dat[, c(32, 34, 38, 39)]) )
 
@@ -181,6 +186,95 @@ tibble(x = sort(unique(spat_comp$Relationship_nr)),
   sum(.)
 
 # all relationship numbers were evaluated
+
+
+### figure 2a
+
+# subset out the bef-relationships that were unknown
+
+fig_2a_raw <- 
+  spat_comp %>%
+  filter(bef_relationship != "unknown") %>%
+  select(`paper number`, Relationship_nr, bef_relationship) %>%
+  mutate(direction = if_else( bef_relationship == "Positive", "+",
+                              if_else( bef_relationship == "Negative", "-", " ")),
+         bef_relationship = if_else( bef_relationship == "Positive", "positive",
+                                      if_else( bef_relationship == "Negative", "negative", "neutral")))
+
+
+# randomly sample single bef slopes from a paper to avoid non-independence
+fig_2a_raw %>%
+  group_by(`paper number`) %>%
+  summarise(n = n()) %>%
+  filter(n > 1) %>%
+  nrow()
+
+fig_2a_raw$`paper number` %>%
+  unique() %>%
+  length()
+
+# 111 papers and 45 have more than one bef slope
+
+
+# set the number of replicates
+r <- 1000
+
+# set up an output list
+fig_2a_ran <- vector("list", length = r)
+
+for (i in seq_along(1:r) ) {
+  
+  x <- 
+    fig_2a_raw %>%
+    group_by(`paper number`) %>%
+    slice_sample(., n = 1) %>%
+    ungroup()
+  
+  fig_2a_ran[[i]] <- 
+    x %>%
+    group_by(bef_relationship, direction) %>%
+    summarise(n = n(), .groups = "drop") %>%
+    mutate(proportion = n/sum(n, na.rm = TRUE))
+  
+}
+
+fig_2a_ran <- 
+  bind_rows(fig_2a_ran, .id = "run")
+
+
+# summarise this to obtain proportions for the observed data
+
+fig_2a_obs <- 
+  fig_2a_raw %>%
+  group_by(bef_relationship, direction) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  mutate(proportion = n/sum(n, na.rm = TRUE))
+
+fig_2a <- 
+  ggplot() +
+  geom_violin(data = fig_2a_ran,
+              mapping = aes(x = bef_relationship, y = proportion, fill = bef_relationship),
+              alpha = 0.7, bw = 0.005) +
+  geom_point(data = fig_2a_obs,
+             mapping = aes(x = bef_relationship, y = proportion),
+             colour = "black", size = 3.5, shape = 21, fill = "red") +
+  scale_fill_viridis_d() +
+  ylab("proportion of slopes") +
+  xlab("") +
+  theme_classic() +
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 11, colour = "black"))
+
+fig_2a
+
+
+
+
+
+
+
+
+
 
 
 
