@@ -274,11 +274,14 @@ fig_2a <-
             mapping = aes(x = bef_relationship, y = proportion, label = direction), 
             position = position_dodge(width = 0.3)) +
   scale_fill_viridis_d() +
+  scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
   ylab("proportion of slopes") +
-  xlab("") +
+  xlab(NULL) +
   theme_classic() +
   theme(legend.position = "none",
-        axis.text.x = element_text(size = 11, colour = "black"))
+        axis.text.x = element_text(size = 9, colour = "black"),
+        axis.text.y = element_text(size = 9, colour = "black"),
+        axis.title = element_text(size = 10, colour = "black"))
 
 fig_2a
 
@@ -446,6 +449,9 @@ for (i in seq_along(1:r) ) {
 fig_2b_ran <- 
   bind_rows(fig_2b_ran, .id = "run")
 
+fig_2b_ran$slope_proportion %>%
+  range()
+
 
 fig_2b <- 
   ggplot() +
@@ -460,11 +466,13 @@ fig_2b <-
             mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship, label = direction), 
             position = position_dodge(width = 0.3)) +
   scale_fill_viridis_d() +
+  scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
   ylab("") +
-  xlab("") +
+  xlab(NULL) +
   theme_classic() +
   theme(legend.position = "none",
-        axis.text.x = element_text(size = 11, colour = "black"))
+        axis.text.x = element_text(size = 9, colour = "black"),
+        axis.text.y = element_text(size = 9, colour = "black"))
 
 fig_2b
 
@@ -474,12 +482,12 @@ fig_2b
 fig_2 <- 
   ggarrange(fig_2a, fig_2b, labels = c("(a)", "(b)"),
             font.label = list(size = 10, color = "black", face = "plain", family = NULL),
-            widths = c(1, 1.9) )
+            widths = c(1, 1.7) )
 
 fig_2
 
 ggsave(filename = here("figures/fig_2.png"), plot = fig_2, dpi = 300,
-       width = 18, height = 10, units = "cm")
+       width = 15, height = 7, units = "cm")
 
 
 
