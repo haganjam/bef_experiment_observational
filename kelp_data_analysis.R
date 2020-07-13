@@ -15,6 +15,8 @@ library(RColorBrewer)
 library(viridis)
 library(here)
 library(vegan)
+library(piecewiseSEM)
+library(ggpubr)
 
 # load the biomass data
 kelp_raw <- read_csv(here("data/Annual_All_Species_Biomass_at_transect_20200108.csv"))
@@ -167,14 +169,18 @@ alpha_div <-
   ungroup() 
 
 ggplot(data = alpha_div,
-         mapping = aes(x = alpha_diversity, y = comm_biomass, colour = as.character(YEAR) )) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
+         mapping = aes(x = alpha_diversity, y = sqrt(comm_biomass), colour = as.character(YEAR) )) +
+  geom_point(alpha = 0.5, shape = 16, size = 2.5) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.1) +
   scale_colour_viridis_d() +
   theme_classic() +
+  ylab("sqrt( community biomass )") +
+  xlab("realised diversity") +
   theme(legend.position = "none")
 
 # test this with a linear mixed model
+
+# explore the data
 ggplot(data = alpha_div,
        mapping = aes(x = alpha_diversity)) +
   geom_histogram() +
@@ -187,20 +193,68 @@ ggplot(data = alpha_div,
   facet_wrap(~YEAR, scales = "free") +
   theme_classic()
 
-# square-root could work if plots are not 
+# square-root could work if plots are not conforming to assumptions
 
 lmm_1 <- lmer(sqrt(comm_biomass) ~ alpha_diversity + (0 + alpha_diversity|YEAR), 
-              data = alpha_div, REML = TRUE)
+              data = mutate(alpha_div, YEAR = as.character(YEAR)), REML = TRUE)
+
+# check the assumptions
 plot(lmm_1)
 hist(residuals(lmm_1))
 
-lmm_1
+# check the model output
+lmm_1_sum <- summary(lmm_1)
+lmm_1_sum
 
-summary(lmm_1)
+# get the r2 value
+rsquared(lmm_1, method = "nagelkerke")
 
+# check for significant fixed effect of alpha diversity
 drop1(lmm_1, test = "Chisq")
 
-predict(lmm_1, type = "response")
+
+# get a slope for each year by fitting a simple linear regression
+# then plot a distribution of slopes
+
+alpha_slopes <- 
+  split(select(alpha_div, -YEAR), alpha_div$YEAR ) %>%
+  lapply(., function(x) {
+    
+    z <- lm(sqrt(comm_biomass) ~ (alpha_diversity), data = x)
+    
+    coef(z)[2]
+    
+  }) %>%
+  bind_rows(., .id = "YEAR")
+
+i1 <- 
+  ggplot(data = alpha_slopes,
+       mapping = aes(x = alpha_diversity)) +
+  geom_histogram(bins = 15, alpha = 0.5, colour = "black") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = mean(alpha_slopes$alpha_diversity), 
+             colour = "red") +
+  xlab(NULL) +
+  ylab(NULL) +
+  theme_classic()
+
+# plot this histogram as an inset graph
+
+fig_4a <- 
+  ggplot(data = alpha_div,
+  mapping = aes(x = alpha_diversity, y = sqrt(comm_biomass), colour = as.character(YEAR) )) +
+  geom_point(alpha = 0.5, shape = 16, size = 2.5) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.5) +
+  scale_colour_viridis_d() +
+  theme_classic() +
+  ylab("sqrt( community biomass )") +
+  xlab("realised diversity") +
+  scale_y_continuous(limits = c(0, 53)) +
+  annotation_custom(ggplotGrob(i1), xmin = 1, xmax = 12, 
+                    ymin = 35, ymax = 58) +
+  theme(legend.position = "none")
+
+fig_4a
 
 
 # examine the relationship between temporal gamma diversity function
@@ -209,14 +263,17 @@ kelp_ana_sum %>%
   summarise(years = length(unique(YEAR)))
 
 
+# we fit the model with the square-root of community biomass
+# do the calculations for biomass with the square-root
+
 # calculate mean biomass
 mean_bio <- 
   kelp_ana_sum %>%
   group_by(SITE, YEAR) %>%
   summarise(comm_biomass = sum(AFDM, na.rm = TRUE), .groups = "drop") %>%
   group_by(SITE) %>%
-  summarise(comm_biomass_mean = mean(comm_biomass, na.rm = TRUE),
-            comm_biomass_se = (sd(comm_biomass, na.rm = TRUE)/sqrt(n())), .groups = "drop")
+  summarise(comm_biomass_mean = mean(sqrt(comm_biomass), na.rm = TRUE),
+            comm_biomass_se = (sd(sqrt(comm_biomass), na.rm = TRUE)/sqrt(n())), .groups = "drop")
 
 # calculate temporal gamma diversity
 temporal_gamma <- 
@@ -233,7 +290,24 @@ temporal_gamma <-
 
 gamma_div <- full_join(mean_bio, temporal_gamma, by = "SITE") 
 
-ggplot() +
+# test this with a linear model
+
+# examine the variable distributions
+hist(gamma_div$comm_biomass_mean)
+hist((gamma_div$temporal_gamma) )
+
+# fit the linear model
+lm_1 <- lm(comm_biomass_mean ~ (temporal_gamma), data = gamma_div)
+plot(lm_1)
+hist(residuals(lm_1))
+
+# check the model output
+summary(lm_1)
+lm_1_sum <- summary(lm_1)
+
+# plot the graph
+fig_4b <- 
+  ggplot() +
   geom_point(data = gamma_div,
              mapping = aes(x = temporal_gamma, y = comm_biomass_mean)) +
   geom_errorbar(data = gamma_div,
@@ -243,18 +317,32 @@ ggplot() +
                 width = 0.1) +
   geom_smooth(data = gamma_div,
               mapping = aes(x = temporal_gamma, y = comm_biomass_mean),
-              method = "lm", alpha = 0.2) +
-  theme_classic()
+              method = "lm", alpha = 0.1, colour = "black", size = 0.5) +
+  annotate("text", x = -Inf, y = Inf, 
+           label = paste("R^2 == ", round(lm_1_sum$r.squared, 2)), parse = TRUE,
+           vjust = 1, hjust = -0.5, size = 3) +
+  annotate("text", x = -Inf, y = Inf, 
+           label = paste("F == ", round(lm_1_sum$fstatistic[1], 2)), parse = TRUE,
+           vjust = 3, hjust = -0.7, size = 3) +
+  annotate("text", x = -Inf, y = Inf, 
+           label = paste("P == ", round(lm_1_sum$coefficients[2, 4], 4)), parse = TRUE,
+           vjust = 5, hjust = -0.45, size = 3) +
+  xlab("species pool diversity (temporal)") +
+  ylab("sqrt( community biomass )") +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 9, colour = "black"),
+        axis.text.y = element_text(size = 9, colour = "black"))
+fig_4b
 
-# test this with a linear model
-hist(gamma_div$comm_biomass_mean)
-hist((gamma_div$temporal_gamma)^(1/3) )
+fig_4 <- 
+  ggarrange(fig_4a, fig_4b, labels = c("(a)", "(b)"),
+          font.label = list(size = 10, color = "black", face = "plain", family = NULL),
+          widths = c(1, 1))
 
-lm_1 <- lm(sqrt(comm_biomass_mean) ~ (temporal_gamma), data = gamma_div)
-plot(lm_1)
-hist(residuals(lm_1))
+ggsave(filename = here("figures/fig_4.png"), plot = fig_4, dpi = 300,
+       width = 16, height = 7, units = "cm")
 
-summary(lm_1)
+
 
 
 # plot mean alpha against mean community biomass (perhaps)
