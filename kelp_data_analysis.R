@@ -8,6 +8,7 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(purrr)
+library(lme4)
 library(ggplot2)
 library(broom)
 library(RColorBrewer)
@@ -146,13 +147,16 @@ kelp_ana_sum <-
 
 # there are two years at the AHND site 2017 and 2019 with zeros for all algae species
 # remove these for now
+kelp_ana_sum %>%
+  filter(!(SITE == "AHND" & YEAR %in% c(2017, 2019)) )
+
+# remove these two years and do the analysis without them
 kelp_ana_sum <- 
   kelp_ana_sum %>%
-  filter(!(SITE == "AHND" & YEAR %in% c(2017, 2019)) )
+  filter(!(YEAR %in% c(2017, 2019)))
 
 
 # work with the summarised data
-
 
 # examine the relationships between alpha diversity and function
 alpha_div <- 
@@ -160,8 +164,7 @@ alpha_div <-
   group_by(SITE, YEAR) %>%
   summarise(alpha_diversity = sum(decostand(AFDM, method = "pa"), na.rm = TRUE),
             comm_biomass = sum(AFDM, na.rm = TRUE)) %>%
-  ungroup() %>%
-  filter( !(YEAR %in% c(2017, 2019)) ) 
+  ungroup() 
 
 ggplot(data = alpha_div,
          mapping = aes(x = alpha_diversity, y = comm_biomass, colour = as.character(YEAR) )) +
@@ -171,11 +174,138 @@ ggplot(data = alpha_div,
   theme_classic() +
   theme(legend.position = "none")
 
+# test this with a linear mixed model
+ggplot(data = alpha_div,
+       mapping = aes(x = alpha_diversity)) +
+  geom_histogram() +
+  facet_wrap(~YEAR, scales = "free") +
+  theme_classic()
+
+ggplot(data = alpha_div,
+       mapping = aes(x = sqrt(comm_biomass) )) +
+  geom_histogram() +
+  facet_wrap(~YEAR, scales = "free") +
+  theme_classic()
+
+# square-root could work if plots are not 
+
+lmm_1 <- lmer(sqrt(comm_biomass) ~ alpha_diversity + (0 + alpha_diversity|YEAR), 
+              data = alpha_div, REML = TRUE)
+plot(lmm_1)
+hist(residuals(lmm_1))
+
+lmm_1
+
+summary(lmm_1)
+
+drop1(lmm_1, test = "Chisq")
+
+predict(lmm_1, type = "response")
+
 
 # examine the relationship between temporal gamma diversity function
 kelp_ana_sum %>%
   group_by(SITE) %>%
   summarise(years = length(unique(YEAR)))
+
+
+# calculate mean biomass
+mean_bio <- 
+  kelp_ana_sum %>%
+  group_by(SITE, YEAR) %>%
+  summarise(comm_biomass = sum(AFDM, na.rm = TRUE), .groups = "drop") %>%
+  group_by(SITE) %>%
+  summarise(comm_biomass_mean = mean(comm_biomass, na.rm = TRUE),
+            comm_biomass_se = (sd(comm_biomass, na.rm = TRUE)/sqrt(n())), .groups = "drop")
+
+# calculate temporal gamma diversity
+temporal_gamma <- 
+  kelp_ana_sum %>%
+  pivot_wider(names_from = SP_CODE, values_from = AFDM) %>%
+  select(-YEAR) %>%
+  group_by(SITE) %>%
+  summarise(across(.cols = everything(), ~sum(.x, na.rm = TRUE)), .groups = "keep") %>%
+  mutate(across(.cols = everything(), ~as.numeric(decostand(.x, method = "pa")) )) %>%
+  ungroup() %>%
+  rowwise(SITE) %>%
+  summarise(temporal_gamma = sum(c_across(where(is.numeric)))) %>%
+  ungroup()
+
+gamma_div <- full_join(mean_bio, temporal_gamma, by = "SITE") 
+
+ggplot() +
+  geom_point(data = gamma_div,
+             mapping = aes(x = temporal_gamma, y = comm_biomass_mean)) +
+  geom_errorbar(data = gamma_div,
+                mapping = aes(x = temporal_gamma, 
+                              ymin = comm_biomass_mean - comm_biomass_se, 
+                              ymax = comm_biomass_mean + comm_biomass_se),
+                width = 0.1) +
+  geom_smooth(data = gamma_div,
+              mapping = aes(x = temporal_gamma, y = comm_biomass_mean),
+              method = "lm", alpha = 0.2) +
+  theme_classic()
+
+# test this with a linear model
+hist(gamma_div$comm_biomass_mean)
+hist((gamma_div$temporal_gamma)^(1/3) )
+
+lm_1 <- lm(sqrt(comm_biomass_mean) ~ (temporal_gamma), data = gamma_div)
+plot(lm_1)
+hist(residuals(lm_1))
+
+summary(lm_1)
+
+
+# plot mean alpha against mean community biomass (perhaps)
+
+# add mean alpha diversity to this dataset
+mean_alpha <- 
+  alpha_div %>%
+  group_by(SITE) %>%
+  summarise(mean_alpha = mean(alpha_diversity, na.rm = TRUE),
+            se_alpha = (sd(alpha_diversity, na.rm = TRUE)/sqrt(n())),
+            alpha_bio_mean = mean(comm_biomass, na.rm = TRUE),
+            alpha_bio_se = (sd(comm_biomass, na.rm = TRUE)/sqrt(n())),
+            .groups = "drop")
+
+gamma_div <- full_join(gamma_div, mean_alpha, by = "SITE") 
+
+ggplot() +
+  geom_point(data = gamma_div,
+             mapping = aes(x = mean_alpha, y = alpha_bio_mean)) +
+  geom_errorbar(data = gamma_div,
+                mapping = aes(x = mean_alpha, 
+                              ymin = alpha_bio_mean - alpha_bio_se, 
+                              ymax = alpha_bio_mean + alpha_bio_se),
+                width = 0.1) +
+  geom_smooth(data = gamma_div,
+              mapping = aes(x = mean_alpha, y = alpha_bio_mean),
+              method = "lm", alpha = 0.2) +
+  theme_classic()
+
+
+# plot alpha and gamma relationships on the same axis
+
+p +
+  geom_point(data = gamma_div,
+              mapping = aes(x = mean_alpha, y = alpha_bio_mean)) +
+  geom_errorbar(data = gamma_div,
+                mapping = aes(x = mean_alpha, 
+                              ymin = alpha_bio_mean - alpha_bio_se, 
+                              ymax = alpha_bio_mean + alpha_bio_se),
+                width = 0.1) +
+  geom_smooth(data = gamma_div,
+              mapping = aes(x = mean_alpha, y = alpha_bio_mean),
+              method = "lm", alpha = 0.2) +
+  theme_classic()
+  
+
+
+
+
+
+# if we decide to keep the 2017 and 2019 years, then we need to correct with this code
 
 # one site has only 17 years of data so we need to correct for this:
 
