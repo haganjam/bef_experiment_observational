@@ -50,6 +50,11 @@ kelp_raw %>%
   filter(transect > 2)
 
 kelp_raw %>%
+  group_by(SITE, YEAR) %>%
+  summarise(transect = length(unique(TRANSECT))) %>%
+  filter(transect == 2)
+
+kelp_raw %>%
   group_by(SITE) %>%
   summarise(year = length(unique(YEAR)))
 
@@ -109,20 +114,52 @@ kelp_ana %>%
 # all species codes are recorded each year at each site and just ticked off
 
 
+# check for NAs in the data
+lapply(kelp_ana, function(x) {
+  
+  if_else(is.na(x), 1, 0) %>%
+    sum()
+  
+})
+
+
 # sum up the transects at each site-year combination
 
 # check if there are missing values
 kelp_ana %>%
-  filter_at(vars(c("AFDM", "SP_CODE")), any_vars(. == -99999))
+  filter(AFDM == -99999) %>%
+  View()
 
-# remove the rows with missing values
+kelp_ana$COMMON_NAME %>%
+  unique()
+
+kelp_ana$SP_CODE %>%
+  unique()
+
+kelp_ana %>%
+  filter(is.na(SP_CODE) ) %>%
+  pull(SCIENTIFIC_NAME) %>%
+  unique()
+
+kelp_ana %>%
+  filter(is.na(SP_CODE) ) %>%
+  nrow()
+
+# remove the rows with missing values for ash free dry mass
 kelp_ana <- 
   kelp_ana %>%
-  filter_at(vars(c("AFDM", "SP_CODE")), all_vars(. != -99999))
+  filter_at(vars(c("AFDM")), any_vars(. != -99999))
 
+# replace the NAs for species code with NIAN as this is the scientific name
+kelp_ana <- 
+  kelp_ana %>%
+  mutate(SP_CODE = if_else(is.na(SP_CODE), "NIAN", SP_CODE))
+
+# check general summary statistics
 kelp_ana %>%
   summary()
 
+# check for more missing values for the AFDM
 kelp_ana %>%
   filter(AFDM < 0)
 
@@ -140,6 +177,7 @@ kelp_ana %>%
   pull(SCIENTIFIC_NAME) %>%
   unique()
 
+
 # summarise for the two transects at each site for each year
 kelp_ana_sum <- 
   kelp_ana %>%
@@ -150,13 +188,16 @@ kelp_ana_sum <-
 # there are two years at the AHND site 2017 and 2019 with zeros for all algae species
 # remove these for now
 kelp_ana_sum %>%
-  filter(!(SITE == "AHND" & YEAR %in% c(2017, 2019)) )
+  filter((SITE == "AHND" & YEAR %in% c(2017, 2019)) )
 
 # remove these two years and do the analysis without them
 kelp_ana_sum <- 
   kelp_ana_sum %>%
   filter(!(YEAR %in% c(2017, 2019)))
 
+kelp_ana_sum$YEAR %>%
+  unique() %>%
+  length()
 
 # work with the summarised data
 
@@ -225,6 +266,7 @@ alpha_slopes <-
     coef(z)[2]
     
   }) %>%
+  
   bind_rows(., .id = "YEAR")
 
 i1 <- 
@@ -247,7 +289,7 @@ fig_4a <-
   geom_smooth(method = "lm", se = FALSE, size = 0.5) +
   scale_colour_viridis_d() +
   theme_classic() +
-  ylab("sqrt( community biomass )") +
+  ylab(expression(sqrt("community biomass"))) +
   xlab("realised diversity") +
   scale_y_continuous(limits = c(0, 53)) +
   annotation_custom(ggplotGrob(i1), xmin = 1, xmax = 12, 
@@ -304,6 +346,7 @@ hist(residuals(lm_1))
 # check the model output
 summary(lm_1)
 lm_1_sum <- summary(lm_1)
+lm_1_sum
 
 # plot the graph
 fig_4b <- 
@@ -320,15 +363,15 @@ fig_4b <-
               method = "lm", alpha = 0.1, colour = "black", size = 0.5) +
   annotate("text", x = -Inf, y = Inf, 
            label = paste("R^2 == ", round(lm_1_sum$r.squared, 2)), parse = TRUE,
-           vjust = 1, hjust = -0.5, size = 3) +
+           vjust = 1, hjust = -0.4, size = 3) +
   annotate("text", x = -Inf, y = Inf, 
            label = paste("F == ", round(lm_1_sum$fstatistic[1], 2)), parse = TRUE,
-           vjust = 3, hjust = -0.7, size = 3) +
+           vjust = 3.2, hjust = -0.5, size = 3) +
   annotate("text", x = -Inf, y = Inf, 
-           label = paste("P == ", round(lm_1_sum$coefficients[2, 4], 4)), parse = TRUE,
+           label = paste("P == ", round(lm_1_sum$coefficients[2, 4], 3)), parse = TRUE,
            vjust = 5, hjust = -0.45, size = 3) +
   xlab("species pool diversity (temporal)") +
-  ylab("sqrt( community biomass )") +
+  ylab(expression(sqrt("community biomass"))) +
   theme_classic() +
   theme(axis.text.x = element_text(size = 9, colour = "black"),
         axis.text.y = element_text(size = 9, colour = "black"))
