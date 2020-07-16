@@ -181,9 +181,6 @@ spat_comp <- read_delim(here("data/van_der_Plas_2019_spatial_extent_complete.csv
 # check if all relationship numbers were evaluated
 unique(spat_comp$Relationship_nr) %>%
   length()
-  
-unique(vand_dat_c$Relationship_nr) %>%
-  length()
 
 tibble(x = sort(unique(spat_comp$Relationship_nr)),
        y = sort(unique(vand_dat_c$Relationship_nr))) %>%
