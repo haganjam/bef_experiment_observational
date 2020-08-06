@@ -17,6 +17,24 @@ library(here)
 library(vegan)
 library(ggpubr)
 
+# create customised plotting theme
+theme_meta <- function(base_size = 12, base_family = "") {
+  theme(panel.background =  element_rect(fill = "white"), 
+        panel.border =      element_rect(fill="NA", color="black", size=0.35, linetype="solid"),
+        axis.line.x = element_line(color="black", size = 0.2),
+        axis.line.y = element_line(color="black", size = 0.2),
+        panel.grid.major =  element_blank(),
+        panel.grid.minor =  element_blank(),
+        axis.ticks.length = unit(-0.16, "cm"),
+        axis.title.x = element_text(colour ="black", size = 12, face = "plain", margin=margin(15,0,0,0,"pt")),
+        axis.title.y = element_text(colour = "black", size = 12, face = "plain", margin=margin(0,15,0,0,"pt")),
+        axis.text.x = element_text(colour = "black", size=10, face = "plain",  margin=margin(10,0,0,0,"pt")),
+        axis.text.y = element_text(colour ="black", size=10, face = "plain", margin=margin(0,10,0,0,"pt")),
+        axis.ticks.x = element_line(colour = "black", size = 0.4),
+        axis.ticks.y = element_line(colour = "black", size = 0.4))
+}
+
+
 # simulate normally distributed niches
 
 rnorm_perfect <- function(n, mean = 0, sd = 1) {
@@ -49,70 +67,121 @@ spp <-
   bind_rows(spp, .id = "species") %>%
   as_tibble()
 
-# normal distributions in colour
-
-ggplot(data = spp, 
-       mapping = aes(x = spp, y = ..count.., fill = species)) +
-  geom_density(alpha = 0.6, colour = NA) +
-  theme_classic() +
-  scale_fill_viridis_d(option = "C") +
-  geom_hline(yintercept=0, colour="white", size=1) +
-  theme(legend.position = "none",
-        axis.text = element_blank(),
-        axis.title = element_blank())
-
 # normal distributions in grey scale
 
-fig_1 <- 
+fig_1a <- 
   ggplot(data = spp, 
        mapping = aes(x = spp, y = ..count.., fill = species)) +
   geom_density(alpha = 0.6, colour = "black") +
-  theme_classic() +
   scale_fill_manual(values=c("#FFFFFF", "#666666", "#CCCCCC", "#000000")) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 5000)) +
   scale_x_continuous(limits = c(-75, 75)) +
+  ylab("competitive ability") +
+  xlab("niche") +
+  theme_meta() +
   theme(legend.position = "none",
-        axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank())
-fig_1
-
-ggsave(filename = here("figures/fig_1.png"), plot = fig_1,
-       dpi = 300)
-
-
-fig_1a <- 
-  ggplot(data = spp %>% filter(species %in% c("A", "D")), 
-         mapping = aes(x = spp, y = ..count.., fill = species)) +
-  geom_density(alpha = 0.6, colour = "black") +
-  theme_classic() +
-  scale_fill_manual(values=c("#FFFFFF", "#000000")) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 5000)) +
-  scale_x_continuous(limits = c(-75, 75)) +
-  theme(legend.position = "none",
-        axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank())
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+fig_1a
 
 ggsave(filename = here("figures/fig_1a.png"), plot = fig_1a,
        dpi = 300)
 
 
-fig_1b <- 
-  ggplot(data = spp %>% filter(species %in% c("B", "C")), 
-         mapping = aes(x = spp, y = ..count.., fill = species)) +
-  geom_density(alpha = 0.6, colour = "black") +
-  theme_classic() +
-  scale_fill_manual(values=c("#666666", "#CCCCCC")) +
-  scale_y_continuous(expand = c(0, 0), limits = c(0, 5000)) +
-  scale_x_continuous(limits = c(-75, 75)) +
-  theme(legend.position = "none",
-        axis.text = element_blank(),
-        axis.title = element_blank(),
-        axis.ticks = element_blank())
+# local species pool terminology
+a_term <- expression(paste("species pool diversity  ", (t[0]), sep = " "))
+
+# realised diversity terminology
+b_term <- expression(paste("realised diversity  ", (t[1]), sep = " "))
+
+# ecosystem function terminology
+eco_func <- expression(paste("ecosystem function  ", (t[1]), sep = " "))
+
+
+# figure 1b
+x <- seq(from = 0, to = 30, by = 1)
+set.seed(45)
+y1 <- 1*(x^0.1) + rnorm(n = length(x), mean = 0, sd = 0.05)
+
+fig_1b_dat <- tibble(x = x, y = y1)
+
+fig_1b_1 <- 
+  ggplot(data = fig_1b_dat,
+       mapping = aes(x = x, y = y)) +
+  stat_smooth(method = 'nls', formula = 'y~a*x^b', method.args = list(start= c(a = 1,b=1)), se = FALSE,
+              size = 0.5, colour = "black") +
+  scale_y_continuous(limits = c(0.9, 1.6)) +
+  ylab(eco_func) +
+  xlab(a_term) +
+  theme_meta() +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+fig_1b_2 <- 
+  ggplot(data = fig_1b_dat,
+       mapping = aes(x = x, y = y)) +
+  scale_y_continuous(limits = c(0.9, 1.6)) +
+  ylab("") +
+  xlab(b_term) +
+  theme_meta() +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+fig_1b <- ggarrange(fig_1b_1, fig_1b_2)  
 
 ggsave(filename = here("figures/fig_1b.png"), plot = fig_1b,
        dpi = 300)
+
+
+# figure 1c
+x <- seq(from = 0, to = 30, by = 1)
+y1 <- (5 - 0.05*x) + rnorm(n = length(x), mean = 0, sd = 0.05)
+y2 <- 2 + rnorm(n = length(x), mean = 0, sd = 0.05)
+y3 <- (0 + 0.1*x) + rnorm(n = length(x), mean = 0, sd = 0.05)
+
+fig_1b2_dat <- tibble(x = x, y1 = y1, y2 = y2, y3 = y3)
+fig_1b2_dat <- 
+  fig_1b2_dat %>%
+  pivot_longer(cols = c("y1", "y2", "y3"))
+
+fig_1c_1 <- 
+  ggplot(data = fig_1b_dat,
+         mapping = aes(x = x, y = y)) +
+  ylab(eco_func) +
+  xlab(a_term) +
+  theme_meta() +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+
+fig_1c_2 <- 
+  ggplot(data = fig_1b2_dat,
+         mapping = aes(x = x, y = value, group = name)) +
+  geom_smooth(method = "lm", size = 0.5, colour = "black") +
+  ylab("") +
+  xlab(b_term) +
+  theme_meta() +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.ticks.y = element_blank())
+
+fig_1c <- ggarrange(fig_1c_1, fig_1c_2)  
+
+ggsave(filename = here("figures/fig_1c.png"), plot = fig_1c,
+       dpi = 300)
+
+
+
+
 
 
 # make pie charts

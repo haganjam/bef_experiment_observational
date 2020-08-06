@@ -17,7 +17,7 @@ library(vegan)
 library(ggpubr)
 
 
-# load van der plas replot data
+# load van der plas replot data (directly extracted from the paper)
 van_fig_3_raw <- read_csv(here("data/van_der_plas_replot_data.csv"))
 
 van_fig_3 <- 
@@ -49,7 +49,7 @@ fig_2a <-
 # ggsave(filename = here("figures/fig_3.png"), plot = fig_3, dpi = 300)
 
 
-# load the spatial extent data
+# load the spatial extent data compiled from raw data and adding spatial extent
 spat_ex_raw <- read_csv(here("data/van_der_plas_2019_spatial_extent_complete.csv"))
 
 # check the column names
