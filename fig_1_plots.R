@@ -20,14 +20,14 @@ library(ggpubr)
 # create customised plotting theme
 theme_meta <- function(base_size = 12, base_family = "") {
   theme(panel.background =  element_rect(fill = "white"), 
-        panel.border =      element_rect(fill="NA", color="black", size=0.35, linetype="solid"),
+        panel.border =      element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
         axis.line.x = element_line(color="black", size = 0.2),
         axis.line.y = element_line(color="black", size = 0.2),
         panel.grid.major =  element_blank(),
         panel.grid.minor =  element_blank(),
         axis.ticks.length = unit(-0.16, "cm"),
-        axis.title.x = element_text(colour ="black", size = 12, face = "plain", margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(colour = "black", size = 12, face = "plain", margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(15,0,0,0,"pt")),
+        axis.title.y = element_text(colour = "black", size = 10, face = "plain", margin=margin(0,15,0,0,"pt")),
         axis.text.x = element_text(colour = "black", size=10, face = "plain",  margin=margin(10,0,0,0,"pt")),
         axis.text.y = element_text(colour ="black", size=10, face = "plain", margin=margin(0,10,0,0,"pt")),
         axis.ticks.x = element_line(colour = "black", size = 0.4),
@@ -87,7 +87,7 @@ fig_1a <-
 fig_1a
 
 ggsave(filename = here("figures/fig_1a.png"), plot = fig_1a,
-       dpi = 300)
+       dpi = 500, units = "cm", width = 5, height = 5)
 
 
 # local species pool terminology
@@ -136,7 +136,7 @@ fig_1b_2 <-
 fig_1b <- ggarrange(fig_1b_1, fig_1b_2)  
 
 ggsave(filename = here("figures/fig_1b.png"), plot = fig_1b,
-       dpi = 300)
+       dpi = 500, units = "cm", width = 10, height = 5)
 
 
 # figure 1c
@@ -165,7 +165,7 @@ fig_1c_1 <-
 fig_1c_2 <- 
   ggplot(data = fig_1b2_dat,
          mapping = aes(x = x, y = value, group = name)) +
-  geom_smooth(method = "lm", size = 0.5, colour = "black") +
+  geom_smooth(method = "lm", size = 0.5, colour = "black", se = FALSE) +
   ylab("") +
   xlab(b_term) +
   theme_meta() +
@@ -177,11 +177,7 @@ fig_1c_2 <-
 fig_1c <- ggarrange(fig_1c_1, fig_1c_2)  
 
 ggsave(filename = here("figures/fig_1c.png"), plot = fig_1c,
-       dpi = 300)
-
-
-
-
+       dpi = 500, units = "cm", width = 10, height = 5)
 
 
 # make pie charts
@@ -384,8 +380,130 @@ pies <-
   ggarrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14,
           df_plots[[1]], df_plots[[2]], df_plots[[3]], df_plots[[4]])
 
+pies
+
 ggsave(filename = here("figures/fig_1_pies.png"), plot = pies,
-       dpi = 300)
+       dpi = 500)
+
+
+# draw case diagrams (Box 2, fig. 1)
+
+# local species pool terminology
+a_term <- expression(paste("species pool diversity  ", (t[0]), sep = " "))
+
+# realised diversity terminology
+b_term <- expression(paste("realised diversity  ", (t[1]), sep = " "))
+
+# ecosystem function terminology
+eco_func <- expression(paste("ecosystem function  ", (t[1]), sep = " "))
+
+# case 1
+case_1a <- 
+  ggplot() +
+  geom_segment(mapping = aes(x = 1, y = 0.5,
+                             xend = 2, yend = 1.5),
+               size = 0.5, colour = "black") +
+  ylab(eco_func) +
+  xlab("") +
+  scale_x_continuous(limits = c(0.75, 2.25), breaks = c(1, 2)) +
+  scale_y_continuous(limits = c(0.25, 1.75)) +
+  theme_meta() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
+
+case_1b <- ggplot() +
+  geom_segment(mapping = aes(x = 1, y = 0.5,
+                             xend = 2, yend = 1.5),
+               size = 0.5, colour = "black") +
+  ylab("") +
+  xlab("") +
+  scale_x_continuous(limits = c(0.75, 2.25), breaks = c(1, 2)) +
+  scale_y_continuous(limits = c(0.25, 1.75)) +
+  theme_meta() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
+
+case_1 <- ggarrange(case_1a, case_1b)
+case_1  
+
+ggsave(filename = here("figures/case_1.png"), plot = case_1,
+       dpi = 500, units = "cm", width = 10, height = 5)
+
+
+# case 2
+case_2a <- 
+  ggplot() +
+  geom_segment(mapping = aes(x = 3, y = 0.5,
+                             xend = 4, yend = 1.5),
+               size = 0.5, colour = "black") +
+  ylab(eco_func) +
+  xlab(a_term) +
+  scale_x_continuous(limits = c(2.75, 4.25), breaks = c(3, 4)) +
+  scale_y_continuous(limits = c(0.25, 1.75)) +
+  theme_meta() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
+
+case_2b <- 
+  ggplot() +
+  geom_segment(mapping = aes(x = 2, y = 1.5,
+                             xend = 3, yend = 0.5),
+               size = 0.5, colour = "black") +
+  ylab("") +
+  xlab(b_term) +
+  scale_x_continuous(limits = c(1.75, 3.25), breaks = c(2, 3)) +
+  scale_y_continuous(limits = c(0.25, 1.75)) +
+  theme_meta() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
+
+case_2 <- ggarrange(case_2a, case_2b)
+case_2  
+
+ggsave(filename = here("figures/case_2.png"), plot = case_2,
+       dpi = 500, units = "cm", width = 10, height = 5)
+
+# case 3
+case_3a <- 
+  ggplot() +
+  geom_segment(mapping = aes(x = 3, y = 0.5,
+                             xend = 4, yend = 1.5),
+               size = 0.5, colour = "black") +
+  ylab(eco_func) +
+  xlab(a_term) +
+  scale_x_continuous(limits = c(2.75, 4.25), breaks = c(3, 4)) +
+  scale_y_continuous(limits = c(0.25, 1.75)) +
+  theme_meta() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
+
+case_3b <- 
+  ggplot() +
+  geom_segment(mapping = aes(x = 3, y = 0.5,
+                             xend = 4, yend = 1.5),
+               size = 0.5, colour = "black") +
+  ylab("") +
+  xlab(b_term) +
+  scale_x_continuous(limits = c(2.75, 4.25), breaks = c(3, 4)) +
+  scale_y_continuous(limits = c(0.25, 1.75)) +
+  theme_meta() +
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
+
+case_3 <- ggarrange(case_3a, case_3b)
+case_3  
+
+ggsave(filename = here("figures/case_3.png"), plot = case_3,
+       dpi = 500, units = "cm", width = 10, height = 5)
+
+
+
 
 
 
