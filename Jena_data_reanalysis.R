@@ -39,6 +39,8 @@ if(! dir.exists(here("figures"))){
 }
 
 
+### fig. 3, fig. s3, fig. s4
+
 # load the Jena community data
 jena_comm <- read_delim(here("data/Jena_Community_02-08.csv"), delim = ",")
 head(jena_comm)
@@ -88,8 +90,7 @@ site_dat <-
            rowSums())
 
 
-
-# Use the jena_bio dataset to get plot-level (20 x 20 m) target biomass measurements
+# use the jena_bio dataset to get plot-level (20 x 20 m) target biomass measurements
 
 # load the Jena biomass data
 jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
@@ -454,7 +455,62 @@ for (i in seq_along(1:length(fig_3i_iii_list))) {
 
 
 
+### compare diversity estimators for the alpha species pool diversity
 
+# load the Jena community data
+jena_est_raw <- read_delim(here("data/Jena_Community_02-08.csv"), delim = ",")
+head(jena_est_raw )
+
+# remove the first plots that were not sown with any species
+jena_est_raw  <- filter(jena_est_raw , !sowndiv %in% c(0, 1))
+
+# create a vector of species names
+sp_names_est <- names(jena_est_raw)[51:110]
+
+# seperate the data into spp and site characteristics matrix
+site_est <- select(jena_est_raw, -all_of(sp_names_est) )
+
+sp_est <- select(jena_est_raw, all_of(sp_names_est ))
+
+# create a season column in site_est
+site_est <- 
+  site_est %>% 
+  mutate(season = if_else(month %in% c("May", "June"), "spring", "summer"))
+
+# create a numeric id column for each data point
+site_est <- 
+  site_est %>%
+  mutate(row_id = seq_along(1:nrow(site_est)))
+
+# replace NAs in sp_dat with zeros to reflect absence
+sp_est <- 
+  sp_est %>% 
+  mutate_all(~replace(., is.na(.), 0))
+
+# check if there are any -9999's in the species data
+sp_est %>% 
+  filter_at(vars(sp_names_est), any_vars(. < 0)) # there are none!
+
+
+### estimate diversity for each row of data in sp_est
+
+# choose years to sample
+year_n <- 6
+
+# sample three years at random from the dataset
+year_s <- sample(x = unique(site_est$year), size = year_n)
+
+# choose the season
+seas <- c("spring")
+
+# get row numbers
+row_id <- 
+  site_est %>%
+  filter(year %in% year_s,
+         season == seas) %>%
+  pull(row_id)
+
+with(site_est[row_id, ], specpool(decostand(sp_est[row_id, ], method = "pa"), plotcode))
 
 
 
