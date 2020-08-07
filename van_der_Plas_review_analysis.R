@@ -21,6 +21,23 @@ if(! dir.exists(here("figures"))){
   dir.create(here("figures"))
 }
 
+# create customised plotting theme
+theme_meta <- function(base_size = 12, base_family = "") {
+  theme(panel.background =  element_rect(fill = "white"), 
+        panel.border =      element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
+        axis.line.x = element_line(color="black", size = 0.2),
+        axis.line.y = element_line(color="black", size = 0.2),
+        panel.grid.major =  element_blank(),
+        panel.grid.minor =  element_blank(),
+        axis.ticks.length = unit(-0.16, "cm"),
+        axis.title.x = element_text(colour ="black", size = 12, face = "plain", margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(colour = "black", size = 12, face = "plain", margin=margin(0,5,0,0,"pt")),
+        axis.text.x = element_text(colour = "black", size=12, face = "plain",  margin=margin(10,0,0,0,"pt")),
+        axis.text.y = element_text(colour ="black", size=12, face = "plain", margin=margin(0,10,0,0,"pt")),
+        axis.ticks.x = element_line(colour = "black", size = 0.4),
+        axis.ticks.y = element_line(colour = "black", size = 0.4))
+}
+
 
 ### code for creating a template to fill in the grain and extent information
 
@@ -231,6 +248,7 @@ r <- 1000
 # set up an output list
 fig_2a_ran <- vector("list", length = r)
 
+set.seed(56)
 for (i in seq_along(1:r) ) {
   
   x <- 
@@ -263,7 +281,7 @@ fig_2a <-
   ggplot() +
   geom_violin(data = fig_2a_ran,
               mapping = aes(x = bef_relationship, y = proportion, fill = bef_relationship),
-              alpha = 0.7, bw = 0.005, position = position_dodge(width=0.3)) +
+              alpha = 1, bw = 0.005, position = position_dodge(width=0.3)) +
   geom_point(data = fig_2a_obs,
              mapping = aes(x = bef_relationship, y = proportion),
              colour = "black", size = 4.5, shape = 21, fill = "white") +
@@ -274,11 +292,8 @@ fig_2a <-
   scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
   ylab("proportion of slopes") +
   xlab(NULL) +
-  theme_classic() +
-  theme(legend.position = "none",
-        axis.text.x = element_text(size = 9, colour = "black"),
-        axis.text.y = element_text(size = 9, colour = "black"),
-        axis.title = element_text(size = 10, colour = "black"))
+  theme_meta() +
+  theme(legend.position = "none")
 
 fig_2a
 
@@ -329,10 +344,6 @@ spat_clas <-
   mutate(lat_diff = (max_lat - min_lat),
          lon_diff = (max_lon -min_lon))
 
-ggplot(data = spat_clas,
-       mapping = aes(x = lon_diff, y = lat_diff, colour = spatial_extent)) +
-  geom_jitter()
-
 # check the high landscape spatial extent values
 spat_clas %>%
   filter(spatial_extent == "landscape",
@@ -367,25 +378,25 @@ fig_2b_raw$spatial_extent <-
   factor(fig_2b_raw$spatial_extent, levels = c("landscape", "regional", "continental", "global"))
 
 
-### figure s1
+### figure s2
 
-fig_s1_dat <- 
+fig_s2_dat <- 
   fig_2b_raw %>%
   mutate(lat_diff = (max_lat - min_lat),
          lon_diff = (max_lon -min_lon))
 
-fig_s1 <- 
-  ggplot(data = rename(fig_s1_dat, `spatial extent` = spatial_extent),
+fig_s2 <- 
+  ggplot(data = rename(fig_s2_dat, `spatial extent` = spatial_extent),
        mapping = aes(x = log(1 + lon_diff), y = log(1 + lat_diff), 
                      colour = `spatial extent`)) +
-  geom_point(size = 2.5, alpha = 0.8, shape = 16) +
+  geom_jitter(size = 2.5, alpha = 1, shape = 16) +
   scale_colour_viridis_d() +
-  ylab("latitude range (ln(1 + DD))") +
-  xlab("longitude range (ln(1 + DD))") +
-  theme_classic()
+  ylab("ln - latitude range (DD)") +
+  xlab("ln - longitude range (DD)") +
+  theme_meta()
 
-ggsave(filename = here("figures/fig_s1.png"), plot = fig_s1, dpi = 300,
-       width = 14, height = 10, units = "cm")
+ggsave(filename = here("figures/fig_s2.png"), plot = fig_s2, dpi = 500,
+       width = 13, height = 10, units = "cm")
 
 
 # continue with plotting of figure 2b
@@ -424,6 +435,7 @@ r <- 1000
 # set up an output list
 fig_2b_ran <- vector("list", length = r)
 
+set.seed(78)
 for (i in seq_along(1:r) ) {
   
   x <- 
@@ -454,7 +466,7 @@ fig_2b <-
   ggplot() +
   geom_violin(data = fig_2b_ran,
               mapping = aes(x = spatial_extent, y = slope_proportion, fill = relationship), 
-              alpha = 0.7, bw = 0.025, position = position_dodge(width=0.3)) +
+              alpha = 1, bw = 0.025, position = position_dodge(width=0.3)) +
   geom_point(data = fig_2b_obs,
              mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship),
              position = position_dodge(width = 0.3),
@@ -466,10 +478,8 @@ fig_2b <-
   scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
   ylab("") +
   xlab(NULL) +
-  theme_classic() +
-  theme(legend.position = "none",
-        axis.text.x = element_text(size = 9, colour = "black"),
-        axis.text.y = element_text(size = 9, colour = "black"))
+  theme_meta() +
+  theme(legend.position = "none")
 
 fig_2b
 
@@ -483,8 +493,8 @@ fig_2 <-
 
 fig_2
 
-ggsave(filename = here("figures/fig_2.png"), plot = fig_2, dpi = 300,
-       width = 15, height = 7, units = "cm")
+ggsave(filename = here("figures/fig_2.png"), plot = fig_2, dpi = 500,
+       width = 19, height = 10, units = "cm")
 
 
 
