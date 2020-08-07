@@ -14,6 +14,24 @@ library(RColorBrewer)
 library(viridis)
 library(here)
 library(vegan)
+library(ggpubr)
+
+# create customised plotting theme
+theme_meta <- function(base_size = 12, base_family = "") {
+  theme(panel.background =  element_rect(fill = "white"), 
+        panel.border =      element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
+        axis.line.x = element_line(color="black", size = 0.2),
+        axis.line.y = element_line(color="black", size = 0.2),
+        panel.grid.major =  element_blank(),
+        panel.grid.minor =  element_blank(),
+        axis.ticks.length = unit(-0.16, "cm"),
+        axis.title.x = element_text(colour ="black", size = 12, face = "plain", margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(colour = "black", size = 12, face = "plain", margin=margin(0,5,0,0,"pt")),
+        axis.text.x = element_text(colour = "black", size=12, face = "plain",  margin=margin(10,0,0,0,"pt")),
+        axis.text.y = element_text(colour ="black", size=12, face = "plain", margin=margin(0,10,0,0,"pt")),
+        axis.ticks.x = element_line(colour = "black", size = 0.4),
+        axis.ticks.y = element_line(colour = "black", size = 0.4))
+}
 
 # make a folder to export figures
 if(! dir.exists(here("figures"))){
@@ -32,9 +50,9 @@ jena_comm <- filter(jena_comm, !sowndiv %in% c(0))
 sp_names <- names(jena_comm)[51:110]
 
 # seperate the data into spp and site characteristics matrix
-site_dat <- select(jena_comm, -sp_names)
+site_dat <- select(jena_comm, all_of(-sp_names))
 
-sp_dat <- select(jena_comm, sp_names)
+sp_dat <- select(jena_comm, all_of(sp_names))
 
 # replace NAs in sp_dat with zeros to reflect absence
 sp_dat <- 
@@ -130,7 +148,6 @@ jena_dat <-
 
 
 # calculate the total number of species observed across years
-
 df_agg <- 
   bind_cols(jena_dat, sp_dat) %>% 
   group_by(plotcode, season) %>%
@@ -152,124 +169,46 @@ total_spp <-
 jena_dat <- full_join(jena_dat, total_spp, by = c("plotcode", "season"))
 
 
-# examine how sowndiv and target_biomass_m are related
-
-ggplot(data = filter(jena_dat, season == "spring") %>% 
-         mutate(year = as.character(year)), 
-       mapping = aes(x = sowndiv, y = target_biomass_m, colour = year)) +
-  geom_jitter() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
-  theme_classic()
-
-ggplot(data = filter(jena_dat, season == "spring") %>% 
-         mutate(year = as.character(year)), 
-       mapping = aes(x = observed_species_5, y = target_biomass_m, colour = year)) +
-  geom_jitter() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
-  theme_classic()
-
-ggplot(data = filter(jena_dat, season == "spring") %>% 
-         mutate(year = as.character(year),
-                sowndiv = as.character(sowndiv)), 
-       mapping = aes(x = observed_species_5, y = target_biomass_m, colour = sowndiv)) +
-  geom_jitter() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
-  facet_wrap(~year, scales = "free") +
-  theme_classic()
-
-
-# plot for intro seminar
-intro_plot <- 
-  ggplot(data = filter(jena_dat, season == "spring",
-                     year == 2003,
-                     sowndiv > 1,
-                     sowndiv < 60) %>%
-         mutate(sowndiv = as.character(sowndiv)), 
-       mapping = aes(x = observed_species, y = target_biomass_m, colour = sowndiv)) +
-  geom_jitter(width = 0.5, size = 4, alpha = 0.7) +
-  geom_smooth(method = "lm", se = FALSE) +
-  ylab("") +
-  xlab("") +
-  scale_colour_viridis_d() +
-  theme_classic() +
-  theme(legend.position = "none",
-        axis.text = element_text(size = 15))
-ggsave(filename = here("figures/intro_sem.png"),
-       width = 14, height = 12, dpi = 300, units = "cm")
-
-
-# how does species pool richness correlate with realised species richness?
-ggplot(data = filter(jena_dat, season == "spring") %>% 
-         mutate(year = as.character(year)), 
-       mapping = aes(x = sowndiv, y = observed_species, colour = year)) +
-  geom_jitter() +
-  geom_smooth(method = "lm", se = FALSE) +
-  geom_abline(slope = 1, intercept = 0) +
-  scale_colour_viridis_d() +
-  theme_classic()
-
-ggplot(data = filter(jena_dat, season == "spring") %>% 
-         mutate(year = as.character(year)), 
-       mapping = aes(x = sowndiv, y = total_species, colour = year)) +
-  geom_abline(slope = 1, intercept = 0) +
-  geom_jitter() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
-  theme_classic()
-
-
-# take the values in the last year of the experiment (i.e. 2008)
+### subset the values in the last year of the experiment (i.e. 2008)
 jena_dat_years <- 
   jena_dat %>%
   filter(season == "spring", year == 2008)
 
-names(jena_dat_years)
-
-jena_dat_years %>%
-  gather(key = "spp", value = "species_number",
-         observed_species, sowndiv, total_species) %>%
-  mutate(spp = factor(spp, levels = c("sowndiv", "observed_species", "total_species"))) %>%
-  ggplot(mapping = aes(x = species_number, y = target_biomass_m, colour = spp)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_colour_viridis_d() +
-  ylab("community biomass") +
-  xlab("species richness") +
-  theme_classic() +
-  theme(legend.title = element_blank(),
-        legend.position = "none")
-
-
 # plot the relationship between species pool diversity and ecosystem function
-fig_s3 <- 
+fig_s3a <- 
   ggplot(data = jena_dat_years %>% 
          filter(sowndiv < 60, sowndiv > 1),
        mapping = aes(x = sowndiv, y = target_biomass_m)) +
-  geom_point() +
+  geom_point(size = 2) +
   geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.5) +
-  ylab("community biomass") +
-  xlab("initial diversity") +
-  theme_classic()
+  scale_x_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
+  ylab(expression(paste("community biomass g ", "(m"^"-2", ")" )) ) +
+  xlab(expression(paste("inoculated ", alpha, " diversity", sep = ""))) +
+  theme_meta()
 
 # plot the relationship between species pool diversity and realised species richness
-fig_s2 <- 
+fig_s3b <- 
   ggplot(data = jena_dat_years %>% 
          filter(sowndiv < 60, sowndiv > 1),
        mapping = aes(x = sowndiv, y = observed_species)) +
-  geom_abline(intercept = 0, slope = 1, colour = "black", size = 0.1, linetype = "dashed") +
-  geom_point(alpha = 0.6, shape = 16) +
+  geom_abline(intercept = 0, slope = 1, colour = "black", size = 0.5, linetype = "dashed") +
+  geom_point(alpha = 1, shape = 16, size = 2) +
   scale_x_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
   scale_y_continuous(limits = c(0, 16), breaks = unique(pull(filter(jena_dat_years, sowndiv < 60, sowndiv > 1), sowndiv))) +
-  ylab("realised diversity") +
-  xlab("initial diversity") +
-  theme_classic()
+  ylab(expression(paste("realised ", alpha, " diversity", sep = ""))) +
+  xlab(expression(paste("inoculated ", alpha, " diversity", sep = ""))) +
+  theme_meta()
+
+fig_s3 <- 
+  ggarrange(fig_s3a, fig_s3b, labels = c("(a)", "(b)"),
+            font.label = list(size = 10, color = "black", face = "plain", family = NULL))
+
+ggsave(filename = here("figures/fig_s3.png"), plot = fig_s3,
+       dpi = 500, units = "cm", width = 20, height = 10)
 
 
 
-# simulate the effect of changing species pool gradients in Jena data
+### simulate the effect of changing species pool gradients in Jena data
 
 # how many plots are there for different ranges?
 jena_dat_years %>% 
@@ -343,8 +282,6 @@ for (i in seq_along(1:nrow(sp_ranges))) {
   
 }
 
-samp_dat[[1]]
-
 # collapse the iterated data and generate new modifier variables
 sim_out <- 
   samp_dat %>%
@@ -416,31 +353,39 @@ sim_out %>%
   pull(sowndiv_max) %>%
   unique()
 
-
-fig_2a <- 
+# plot fig. 3
+fig_3 <- 
   ggplot(data = sim_out,
        mapping = aes(x = initial_div_range, y = estimate, colour = realised_div_range)) +
   geom_jitter(alpha = 0.5, shape = 16, size = 4, width = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_x_continuous(breaks = ord) +
-  xlab("initial diversity range") +
-  ylab("realised diversity function slope") +
-  labs(colour = "realised diversity range") +
+  xlab(expression(paste(alpha, " species pool diversity range", sep = ""))) +
+  ylab(expression(paste("realised ", alpha, " diversity", " - ", "function slope", sep = ""))) +
+  labs(colour = expression(paste("realised ", alpha, " diversity range") ) ) +
   scale_colour_viridis_c() +
-  theme_classic() +
-  theme(legend.position="top")
+  theme_meta() +
+  theme(legend.position = "top")
 
-fig_s1 <- 
+ggsave(filename = here("figures/fig_3.png"), plot = fig_3,
+       dpi = 500, units = "cm", width = 11, height = 10)
+
+# plot fig s4
+fig_s4 <- 
   ggplot(data = sim_out) +
   geom_jitter(aes(x = initial_div_range, y = sowndiv_min, group = initial_div_range )) +
   geom_boxplot(aes(x = initial_div_range, y = sowndiv_min, group = initial_div_range )) +
   scale_x_continuous(breaks = ord) +
-  xlab("initial diversity range") +
-  ylab("minimum initial diversity") +
-  theme_classic()
+  xlab(expression(paste("inoculated ", alpha, " diversity range", sep = ""))) +
+  ylab(expression(paste("minimum inoculated  ", alpha, " diversity", sep = ""))) +
+  theme_meta()
+
+ggsave(filename = here("figures/fig_s4.png"), plot = fig_s4,
+       dpi = 500, units = "cm", width = 10, height = 10)
+
 
 # plot insets to show the slope calculation
-fig_2i_iii <- 
+fig_3i_iii_dat <- 
   samp_dat %>%
   bind_rows(.id = "replicate") %>%
   group_by(replicate) %>%
@@ -454,47 +399,60 @@ fig_2i_iii <-
   filter(realised_div_range >= min_r)
 
 # check the sowndiv values when without any additional diversity range
-fig_2i_iii %>%
+fig_3i_iii_dat %>%
   filter(initial_div_range == 0) %>%
   pull(sowndiv) %>%
   unique()
 
-# sample 
+# sample randomly a set of plots for the insets of fig. 3i-iii
+set.seed(45)
 i_reps <- 
-  insets %>%
+  fig_3i_iii_dat %>%
   filter(initial_div_range %in% c(0, 6, 14) ) %>%
   group_by(initial_div_range) %>%
   sample_n(., size = 1) %>%
   ungroup() %>%
   pull(replicate)
 
-fig_2i_iii <- 
-  fig_2i_iii %>%
+fig_3i_iii <- 
+  fig_3i_iii_dat %>%
   filter(replicate %in% i_reps) %>%
   split(., .$replicate) %>%
   lapply(function (x) {
     
     ggplot(data = x,
            mapping = aes(x = observed_species, y = target_biomass_m)) +
-      geom_point(size = 4) +
-      geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.1) +
-      ggtitle(paste0("initial_div_range_", x$initial_div_range[1]) ) +
-      ylab("biomass") +
-      xlab("realised diversity") +
-      theme_classic() +
-      theme(axis.title = element_text(size = 20),
-            axis.text = element_text(size = 18))
+      geom_point(size = 2) +
+      geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.5) +
+      ylab(expression(paste("community biomass g ", "(m"^"-2", ")" )) ) +
+      xlab(expression(paste("realised ", alpha, " diversity", sep = ""))) +
+      theme_meta() +
+      theme(axis.title.y = element_text(size = 8),
+            axis.title.x = element_text(size = 8),
+            axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8))
     
   })
 
-jena_figs <- list(fig_s1, fig_s2, fig_s3, fig_2a, fig_2i_iii[[1]], fig_2i_iii[[2]], fig_2i_iii[[3]])
-names(jena_figs) <- c(1:length(jena_figs))
+# check plots and their inoculated diversity range
+fig_3i_iii_dat %>%
+  filter(replicate %in% i_reps) %>%
+  group_by(replicate) %>%
+  summarise(range = max(sowndiv)-min(sowndiv))
 
-for (i in seq_along(1:length(jena_figs))) {
+# put the insets into a list
+fig_3i_iii_list <- list(fig_3i_iii[[1]], fig_3i_iii[[2]], fig_3i_iii[[3]])
+names(fig_3i_iii_list) <- c(1:length(fig_3i_iii_list))
+
+# export the insets
+for (i in seq_along(1:length(fig_3i_iii_list))) {
   
-  ggsave(filename = paste0(here("figures"), "/jena_fig_", names(jena_figs)[i], ".png"), 
-         plot = jena_figs[[i]], dpi = 300)
+  ggsave(filename = paste0(here("figures"), "/fig_3_", names(fig_3i_iii_list)[i], ".png"), 
+         plot = fig_3i_iii_list[[i]], dpi = 500, units = "cm", width = 5, height = 5)
+  
 }
+
+
 
 
 
