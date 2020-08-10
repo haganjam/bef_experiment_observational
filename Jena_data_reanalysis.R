@@ -495,10 +495,13 @@ sp_est %>%
 ### estimate diversity for each row of data in sp_est
 
 # choose years to sample
-year_n <- 6
+year_n <- 3
 
 # sample three years at random from the dataset
 year_s <- sample(x = unique(site_est$year), size = year_n)
+
+# or chooose years directly
+year_s <- c(2006, 2007, 2008)
 
 # choose the season
 seas <- c("spring")
@@ -510,7 +513,42 @@ row_id <-
          season == seas) %>%
   pull(row_id)
 
-with(site_est[row_id, ], specpool(decostand(sp_est[row_id, ], method = "pa"), plotcode))
+est_out <- with(site_est[row_id, ], specpool(decostand(sp_est[row_id, ], method = "pa"), plotcode))
+
+# add a plot code column
+est_out$plotcode <- row.names(est_out)
+
+# join this to the sowndiv data
+est_out <- 
+  left_join(as_tibble(est_out), 
+            site_est %>%
+              filter(time == 5) %>%
+              select(plotcode, sowndiv), 
+            by = "plotcode")
+
+# make each estimator a variable
+est_out <- 
+  est_out %>%
+  select(-contains(match = "se")) %>%
+  pivot_longer(cols = c(Species, chao, jack1, jack2, boot), 
+               names_to = "estimator",
+               values_to = "estimate")
+
+# estimate the absolute and percent deviation of each estimate from the sowndiv
+est_out <- 
+  est_out %>%
+  mutate(abs_error = (sowndiv-estimate)) %>%
+  mutate(perc_error = ((abs_error/sowndiv)*100) )
+
+# fit the linear models and get the r2 values
+
+models <- mtcars %>%
+  nest_by(cyl) %>%
+  mutate(mod = list(lm(mpg ~ disp, data = data)))
+models %>% summarise(rsq = summary(mod)$r.squared)
+
+
+
 
 
 
