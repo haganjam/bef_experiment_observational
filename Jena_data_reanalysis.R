@@ -455,7 +455,10 @@ for (i in seq_along(1:length(fig_3i_iii_list))) {
 
 
 
+
 ### compare diversity estimators for the alpha species pool diversity
+
+### Jena data
 
 # load the Jena community data
 jena_est_raw <- read_delim(here("data/Jena_Community_02-08.csv"), delim = ",")
@@ -495,16 +498,16 @@ sp_est %>%
 ### estimate diversity for each row of data in sp_est
 
 # choose years to sample
-year_n <- 3
+year_n <- 
 
 # sample three years at random from the dataset
 year_s <- sample(x = unique(site_est$year), size = year_n)
 
 # or chooose years directly
-year_s <- c(2006, 2007, 2008)
+year_s <- c(2007, 2008)
 
 # choose the season
-seas <- c("spring")
+seas <- c("spring", "summer")
 
 # get row numbers
 row_id <- 
@@ -537,15 +540,31 @@ est_out <-
 # estimate the absolute and percent deviation of each estimate from the sowndiv
 est_out <- 
   est_out %>%
-  mutate(abs_error = (sowndiv-estimate)) %>%
+  mutate(abs_error = abs((sowndiv-estimate)) ) %>%
   mutate(perc_error = ((abs_error/sowndiv)*100) )
 
-# fit the linear models and get the r2 values
+est_out %>%
+  group_by(estimator) %>%
+  summarise(m_abs_error = mean(abs_error),
+            se_abs_error = sd(abs_error)/sqrt(n()),
+            m_perc_error = mean(perc_error),
+            se_perc_error = sd(perc_error)/sqrt(n()),
+            .groups = "drop")
 
-models <- mtcars %>%
-  nest_by(cyl) %>%
-  mutate(mod = list(lm(mpg ~ disp, data = data)))
-models %>% summarise(rsq = summary(mod)$r.squared)
+est_out %>%
+  group_by(estimator, sowndiv) %>%
+  summarise(m_abs_error = mean(abs_error),
+            m_perc_error = mean(perc_error),
+            .groups = "drop") %>%
+  ggplot(data = .,
+         mapping = aes(x = sowndiv, y = m_perc_error, colour = estimator)) +
+  geom_point()
+
+# fit the linear models and get the r2 values
+est_out %>%
+  nest_by(estimator) %>%
+  mutate(model = list(lm(estimate ~ sowndiv, data = data))) %>%
+  summarise(rsq = summary(model)$r.squared )
 
 
 
