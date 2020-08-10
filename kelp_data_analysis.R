@@ -18,6 +18,23 @@ library(vegan)
 library(piecewiseSEM)
 library(ggpubr)
 
+# create customised plotting theme
+theme_meta <- function(base_size = 12, base_family = "") {
+  theme(panel.background =  element_rect(fill = "white"), 
+        panel.border =      element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
+        axis.line.x = element_line(color="black", size = 0.2),
+        axis.line.y = element_line(color="black", size = 0.2),
+        panel.grid.major =  element_blank(),
+        panel.grid.minor =  element_blank(),
+        axis.ticks.length = unit(-0.16, "cm"),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(colour = "black", size = 10, face = "plain", margin=margin(0,5,0,0,"pt")),
+        axis.text.x = element_text(colour = "black", size=10, face = "plain",  margin=margin(10,0,0,0,"pt")),
+        axis.text.y = element_text(colour ="black", size=10, face = "plain", margin=margin(0,10,0,0,"pt")),
+        axis.ticks.x = element_line(colour = "black", size = 0.4),
+        axis.ticks.y = element_line(colour = "black", size = 0.4))
+}
+
 # load the biomass data
 kelp_raw <- read_csv(here("data/Annual_All_Species_Biomass_at_transect_20200108.csv"))
 
@@ -214,45 +231,10 @@ ggplot(data = alpha_div,
   geom_point(alpha = 0.5, shape = 16, size = 2.5) +
   geom_smooth(method = "lm", se = FALSE, size = 0.1) +
   scale_colour_viridis_d() +
-  theme_classic() +
+  theme_meta() +
   ylab("sqrt( community biomass )") +
   xlab("realised diversity") +
   theme(legend.position = "none")
-
-# test this with a linear mixed model
-
-# explore the data
-ggplot(data = alpha_div,
-       mapping = aes(x = alpha_diversity)) +
-  geom_histogram() +
-  facet_wrap(~YEAR, scales = "free") +
-  theme_classic()
-
-ggplot(data = alpha_div,
-       mapping = aes(x = sqrt(comm_biomass) )) +
-  geom_histogram() +
-  facet_wrap(~YEAR, scales = "free") +
-  theme_classic()
-
-# square-root could work if plots are not conforming to assumptions
-
-lmm_1 <- lmer(sqrt(comm_biomass) ~ alpha_diversity + (0 + alpha_diversity|YEAR), 
-              data = mutate(alpha_div, YEAR = as.character(YEAR)), REML = TRUE)
-
-# check the assumptions
-plot(lmm_1)
-hist(residuals(lmm_1))
-
-# check the model output
-lmm_1_sum <- summary(lmm_1)
-lmm_1_sum
-
-# get the r2 value
-rsquared(lmm_1, method = "nagelkerke")
-
-# check for significant fixed effect of alpha diversity
-drop1(lmm_1, test = "Chisq")
-
 
 # get a slope for each year by fitting a simple linear regression
 # then plot a distribution of slopes
@@ -269,7 +251,7 @@ alpha_slopes <-
   
   bind_rows(., .id = "YEAR")
 
-i1 <- 
+fig_4a_inset <- 
   ggplot(data = alpha_slopes,
        mapping = aes(x = alpha_diversity)) +
   geom_histogram(bins = 15, alpha = 0.5, colour = "black") +
@@ -278,7 +260,9 @@ i1 <-
              colour = "red") +
   xlab(NULL) +
   ylab(NULL) +
-  theme_classic()
+  theme_meta() +
+  theme(axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8))
 
 # plot this histogram as an inset graph
 
@@ -288,16 +272,15 @@ fig_4a <-
   geom_point(alpha = 0.5, shape = 16, size = 2.5) +
   geom_smooth(method = "lm", se = FALSE, size = 0.5) +
   scale_colour_viridis_d() +
-  theme_classic() +
-  ylab(expression(sqrt("community biomass"))) +
-  xlab("realised diversity") +
+  theme_meta() +
+  ylab(expression(sqrt(paste("community dry mass (g ",  "m"^"-2", ")") ))) +
+  xlab(expression(paste("realised ", alpha, " diversity"))) +
   scale_y_continuous(limits = c(0, 53)) +
-  annotation_custom(ggplotGrob(i1), xmin = 1, xmax = 12, 
-                    ymin = 35, ymax = 58) +
+  annotation_custom(ggplotGrob(fig_4a_inset), xmin = 1, xmax = 12, 
+                    ymin = 34, ymax = 57) +
   theme(legend.position = "none")
 
 fig_4a
-
 
 # examine the relationship between temporal gamma diversity function
 kelp_ana_sum %>%
@@ -362,19 +345,18 @@ fig_4b <-
               mapping = aes(x = temporal_gamma, y = comm_biomass_mean),
               method = "lm", alpha = 0.1, colour = "black", size = 0.5) +
   annotate("text", x = -Inf, y = Inf, 
-           label = paste("R^2 == ", round(lm_1_sum$r.squared, 2)), parse = TRUE,
-           vjust = 1, hjust = -0.4, size = 3) +
+           label = paste("r^2 == ", round(lm_1_sum$r.squared, 2)), parse = TRUE,
+           vjust = 1.1, hjust = -0.5, size = 3) +
   annotate("text", x = -Inf, y = Inf, 
            label = paste("F == ", round(lm_1_sum$fstatistic[1], 2)), parse = TRUE,
-           vjust = 3.2, hjust = -0.5, size = 3) +
+           vjust = 3.3, hjust = -0.5, size = 3) +
   annotate("text", x = -Inf, y = Inf, 
            label = paste("P == ", round(lm_1_sum$coefficients[2, 4], 3)), parse = TRUE,
-           vjust = 5, hjust = -0.45, size = 3) +
-  xlab("species pool diversity (temporal)") +
-  ylab(expression(sqrt("community biomass"))) +
-  theme_classic() +
-  theme(axis.text.x = element_text(size = 9, colour = "black"),
-        axis.text.y = element_text(size = 9, colour = "black"))
+           vjust = 5.1, hjust = -0.45, size = 3) +
+  xlab(expression(paste(alpha, " species pool diversity", sep = ""))) +
+  ylab(expression(sqrt(paste("community dry mass (g ",  "m"^"-2", ")") ))) +
+  theme_meta()
+
 fig_4b
 
 fig_4 <- 
@@ -382,7 +364,7 @@ fig_4 <-
           font.label = list(size = 10, color = "black", face = "plain", family = NULL),
           widths = c(1, 1))
 
-ggsave(filename = here("figures/fig_4.png"), plot = fig_4, dpi = 300,
+ggsave(filename = here("figures/fig_4.png"), plot = fig_4, dpi = 500,
        width = 16, height = 7, units = "cm")
 
 
