@@ -30,10 +30,10 @@ theme_meta <- function(base_size = 12, base_family = "") {
         panel.grid.major =  element_blank(),
         panel.grid.minor =  element_blank(),
         axis.ticks.length = unit(-0.16, "cm"),
-        axis.title.x = element_text(colour ="black", size = 12, face = "plain", margin=margin(5,0,0,0,"pt")),
-        axis.title.y = element_text(colour = "black", size = 12, face = "plain", margin=margin(0,5,0,0,"pt")),
-        axis.text.x = element_text(colour = "black", size=12, face = "plain",  margin=margin(10,0,0,0,"pt")),
-        axis.text.y = element_text(colour ="black", size=12, face = "plain", margin=margin(0,10,0,0,"pt")),
+        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(colour = "black", size = 10, face = "plain", margin=margin(0,5,0,0,"pt")),
+        axis.text.x = element_text(colour = "black", size=10, face = "plain",  margin=margin(10,0,0,0,"pt")),
+        axis.text.y = element_text(colour ="black", size=10, face = "plain", margin=margin(0,10,0,0,"pt")),
         axis.ticks.x = element_line(colour = "black", size = 0.4),
         axis.ticks.y = element_line(colour = "black", size = 0.4))
 }
@@ -396,7 +396,7 @@ fig_s2 <-
   theme_meta()
 
 ggsave(filename = here("figures/fig_s2.png"), plot = fig_s2, dpi = 500,
-       width = 13, height = 10, units = "cm")
+       width = 11, height = 7, units = "cm")
 
 
 # continue with plotting of figure 2b
@@ -494,7 +494,7 @@ fig_2 <-
 fig_2
 
 ggsave(filename = here("figures/fig_2.png"), plot = fig_2, dpi = 500,
-       width = 19, height = 10, units = "cm")
+       width = 16, height = 7, units = "cm")
 
 
 
