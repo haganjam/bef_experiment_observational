@@ -91,13 +91,13 @@ ggsave(filename = here("figures/fig_1a.png"), plot = fig_1a,
 
 
 # local species pool terminology
-a_term <- expression(paste("species pool diversity  ", (t[0]), sep = " "))
+a_term <- expression(paste(alpha, " species pool diversity", sep = " "))
 
 # realised diversity terminology
-b_term <- expression(paste("realised diversity  ", (t[1]), sep = " "))
+b_term <- expression(paste("realised ", alpha, " diversity ", (t[n]), sep = " "))
 
 # ecosystem function terminology
-eco_func <- expression(paste("ecosystem function  ", (t[1]), sep = " "))
+eco_func <- expression(paste("ecosystem function  ", (t[n]), sep = " "))
 
 
 # figure 1b
@@ -387,15 +387,6 @@ ggsave(filename = here("figures/fig_1_pies.png"), plot = pies,
 
 
 # draw case diagrams (Box 2, fig. 1)
-
-# local species pool terminology
-a_term <- expression(paste("species pool diversity  ", (t[0]), sep = " "))
-
-# realised diversity terminology
-b_term <- expression(paste("realised diversity  ", (t[1]), sep = " "))
-
-# ecosystem function terminology
-eco_func <- expression(paste("ecosystem function  ", (t[1]), sep = " "))
 
 # case 1
 case_1a <- 
