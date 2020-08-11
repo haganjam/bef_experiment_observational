@@ -192,9 +192,12 @@ error_dat <-
 # plot error rate between the estimators
 ggplot(data = error_dat,
        mapping = aes(x = estimator, y = perc_error)) +
-  geom_jitter(mapping = aes(colour = pos_neg), width = 0.2) +
-  scale_colour_brewer()
-  geom_boxplot(outlier.shape = NA, width = 0.1, fill = "grey") 
+  geom_jitter(mapping = aes(colour = pos_neg), 
+              width = 0.2, size = 2, alpha = 0.2) +
+  scale_colour_viridis_d() +
+  geom_boxplot(outlier.shape = NA, width = 0.1, fill = "grey") +
+  theme_meta() +
+  theme(legend.position = "none")
 
 # calculate summmary statistics for the error rates
 error_dat %>%
