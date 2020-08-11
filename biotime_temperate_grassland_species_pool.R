@@ -1,3 +1,4 @@
+
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
 # Title: Species pool estimation from individual composition samples using BIOTIME data
@@ -67,7 +68,7 @@ ad_dat_raw <-
   ad_dat_raw %>%
   filter(PLOT %in% plot_list)
 
-# are all 44 plots surveyed in each year?
+# are the number of quadrats consistent through time?
 ad_dat_raw %>%
   group_by(YEAR) %>%
   summarise(plots = length(unique(PLOT)))
@@ -84,7 +85,7 @@ ad_dat_raw %>%
   group_by(YEAR) %>%
   summarise(mean = mean(temp_alpha))
 
-# create a species by site matrix
+# create a species by site matrix and then replace the NAs with zeros to indicate absence
 ad_dat_wide <- 
   ad_dat_raw %>%
   select(PLOT, YEAR, GENUS_SPECIES, ABUNDANCE) %>%
@@ -93,6 +94,7 @@ ad_dat_wide <-
               values_from = "ABUNDANCE") %>%
   mutate(across(.cols = where(is.numeric), ~if_else(is.na(.), 0, .)))
 
+# split the species by site dataframe into a site and species dataframe separately
 site <- 
   ad_dat_wide %>%
   mutate(row_id = 1:nrow(ad_dat_wide)) %>%
@@ -103,49 +105,66 @@ spp <-
   select(-PLOT, -YEAR)
 
 
-# choose a year randomly to estimate the species pool diversity
+# randomly sample different years and perform the estimation
 
-# how many years to choose?
-n_year <- 1
+# how many individuals years to choose? Here, we just use all of them
+year_samps <- length(unique(site$YEAR))
 
-# sample three years at random from the dataset
-year_s <- sample(x = unique(site$YEAR), size = n_year)
+# sample 10 years randomly to do the estimations for
+year_s <- sample(x = unique(site$YEAR), size = year_samps, replace = FALSE)
 
-# get row numbers
-rows <- 
-  site %>%
-  filter(YEAR %in% year_s) %>%
-  pull(row_id)
+# create an output vector
+species_pool_samp <- vector("list", length = year_samps)
 
-rows %>% length()
-
-spp_pool_est <- 
-  with(site[rows, ], estimateR(spp[rows, ]), PLOT)
-
-spp_pool_list <- vector("list", length = length(rows))
-for(i in (seq_along(1:length(rows)))) {
+for(i in seq_along(1:year_samps)) {
   
-  spp_pool_list[[i]] <- spp_pool_est[,i]
+  # get row numbers
+  rows <- 
+    site %>%
+    filter(YEAR %in% year_s[i]) %>%
+    pull(row_id)
+  
+  spp_pool_est <- 
+    with(site[rows, ], estimateR(spp[rows, ]), PLOT)
+  
+  spp_pool_list <- vector("list", length = length(rows))
+  
+  for(k in (seq_along(1:length(rows)))) {
+    
+    spp_pool_list[[k]] <- spp_pool_est[,k]
+    
+  }
+  
+  spp_pool <- 
+    as_tibble(do.call(rbind, spp_pool_list)) %>%
+    mutate(row_id = rows)
+  
+  # get data frame with plot id
+  plots <- 
+    site %>%
+    filter(row_id %in% rows) %>%
+    select(row_id, PLOT)
+  
+  spp_pool_est <- 
+    left_join(spp_pool, plots, by = "row_id") %>%
+    select(-contains("se.")) %>%
+    pivot_longer(cols = starts_with("S"),
+                 names_to = "estimator",
+                 values_to = "estimate")
+  
+  # add a year identity to this dataframe
+  spp_pool_est$year <- year_s[i]
+  
+  # write this into a list
+  species_pool_samp[[i]] <- spp_pool_est
   
 }
 
-spp_pool <- 
-  as_tibble(do.call(rbind, spp_pool_list)) %>%
-  mutate(row_id = rows)
-spp_pool
+# bind this list into a dataframe
+species_pool_samp <- 
+  species_pool_samp %>%
+  bind_rows(., .id = "run")
 
-# get data frame with plot id
-plots <- 
-  site %>%
-  filter(row_id %in% rows) %>%
-  select(row_id, PLOT)
-
-spp_pool_est <- 
-  left_join(spp_pool, plots, by = "row_id") %>%
-  select(-contains("se.")) %>%
-  pivot_longer(cols = starts_with("S"),
-               names_to = "estimator",
-               values_to = "estimate")
 
 # get temporal gamma diversity
 temp_gam <- 
@@ -155,19 +174,29 @@ temp_gam <-
 
 # join the temporal gamma data to the estimated data
 spp_pool_est <- 
-  left_join(spp_pool_est, temp_gam, by = "PLOT")
+  left_join(species_pool_samp, temp_gam, by = "PLOT")
 
 # how many data points are there for each?
 spp_pool_est %>%
   group_by(estimator) %>%
   summarise(n = n())
 
+
 # what is the error rate?
 error_dat <- 
   spp_pool_est  %>%
   mutate(abs_error = abs((temp_gamma-estimate)) ) %>%
-  mutate(perc_error = ((abs_error/temp_gamma)*100) )
+  mutate(perc_error = ((abs_error/temp_gamma)*100),
+         pos_neg = if_else( (temp_gamma-estimate) > 0, "under", "over"))
 
+# plot error rate between the estimators
+ggplot(data = error_dat,
+       mapping = aes(x = estimator, y = perc_error)) +
+  geom_jitter(mapping = aes(colour = pos_neg), width = 0.2) +
+  scale_colour_brewer()
+  geom_boxplot(outlier.shape = NA, width = 0.1, fill = "grey") 
+
+# calculate summmary statistics for the error rates
 error_dat %>%
   group_by(estimator) %>%
   summarise(m_abs_error = mean(abs_error, na.rm = TRUE),
@@ -176,19 +205,26 @@ error_dat %>%
             se_perc_error = sd(perc_error, na.rm = TRUE)/sqrt(n()),
             .groups = "drop")
 
-
-# fit a linear model to get the r2 values
-# fit the linear models and get the r2 values
 spp_pool_est %>%
-  nest_by(estimator) %>%
-  mutate(model = list(lm(estimate ~ temp_gamma, data = data))) %>%
-  summarise(rsq = summary(model)$r.squared, .groups = "drop")
+  filter(is.na(estimate)) %>%
+  nrow()
 
-ggplot(data = spp_pool_est,
-       mapping = aes(x = temp_gamma, y = estimate, colour = estimator)) +
-  geom_jitter(size = 2)
+# there are 42 rows with missing data
 
+# calculate the correlation coefficients between the estimate and the actual gamma
+corr_out <- 
+  spp_pool_est %>%
+  nest_by(year, estimator) %>%
+  summarise(corr = list(cor(x = data$estimate, y = data$temp_gamma,
+                         use = "pairwise.complete.obs") ),
+            .groups = "drop") %>%
+  unnest(cols = c("corr"))
 
+ggplot(data = corr_out,
+       mapping = aes(x = estimator, y = corr)) +
+  geom_jitter(width = 0.1) +
+  geom_boxplot(outlier.shape = NULL, width = 0.1, fill = "grey") +
+  theme_meta()
 
 
 
