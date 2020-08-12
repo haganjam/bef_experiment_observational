@@ -157,9 +157,13 @@ s_l_2010_mod(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
 
 # run this function for 10 species to check results from the paper
 test_out <- 
-  s_l_2010_mod(spp_n = 10, runs = 1, t = 4000, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
+  s_l_2010_mod(spp_n = 10, runs = 50, t = 4000, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
 
-test_out
+test_out %>%
+  filter(community_biomass < 200) %>%
+  ggplot(mapping = aes(x = realised_richness, y = community_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm")
 
 
 
@@ -169,7 +173,7 @@ test_out
 ### load the data directly (i.e. extracted from the paper)
 
 # load the species pool data
-spp_pool <- read_csv(here("data/stachova_leps_fig_1_data.csv"))
+spp_pool <- read_csv(here("data/stachova_leps_fig_1_data.csv")) 
 
 # round off the species pool and realised diversity data to the nearest integer
 
