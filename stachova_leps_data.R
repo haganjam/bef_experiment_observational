@@ -37,120 +37,122 @@ theme_meta <- function(base_size = 12, base_family = "") {
 
 ### code the simulation model
 
-# set the different species pools
-spp_n <- 10
+### code the Stachova and Leps (2010) simulation model (function = s_l_2010_mod)
 
-# set the number of runs per species pool
+# parameter description
+# spp_n - number of species in the initial colonising pool
+# runs - number of independent runs with different randomly drawn parameters (i.e. K, r and alphas)
+# t - number of time-steps to run the model for
+# n0 - starting abundance of all species
+# m_alpha - mean alpha value when drawing from truncated normal
+# sd_alpha - sd alpha value when drawing from truncated normal
 
-# set the number of time points
-t <- 50
+# outputs a dataframe with:
+# run (i.e. model run with randomly drawn parameter values)
+# realised richness (i.e. number of species leftover)
+# community biomass (i.e. sum of all species abundances)
+# species pool (i.e. number of species initially allowed to colonise)
 
-# set the starting value for all species
-n0 <- 3
+# these properties are only exported for the final time-step in the model
 
-# set the mean alpha value
-m_alpha <- 1
-
-# set the sd alpha value
-sd_alpha <- 0.2
-
-
-
-# generate the competition coefficients
-
-# set up the permutations between species
-alpha <- 
-  as.data.frame(gtools::permutations(n = spp_n,r = 2, v = c(1:spp_n), repeats.allowed = FALSE))
-
-names(alpha) <- c("j", "i")
-
-# add the alpha values to the alpha val dataframe
-alpha$alpha_vals <- 
-  truncnorm::rtruncnorm(n = nrow(alpha), a = 0, b = 1.2, mean = m_alpha, sd = sd_alpha)
-
-# generate the carrying capacities for each species (K)
-k_vals <- runif(n = spp_n, min = 3, max = 150)
-
-# generate growth rates values (r)
-r_vals <- runif(n = spp_n, min = 0.01, max = 0.5)
-
-# code a nested for loop: for each time and for each species
-
-# create a vector of starting values for each species
-n_vals <- rep(n0, times = spp_n)
-
-# create an output list of species abundances for each time point
-n_t <- vector("list", length = t)
-n_t
-
-# fill the first time point with starting abundances
-n_t[[1]] <- n_vals
-
-# for each time point t
-for(m in seq(from = 2, to = t, by = 1)){
+s_l_2010_mod <- 
   
-  # for each species k
-  for (k in seq(from = 1, to = spp_n, by = 1)) {
+  function(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2) {
     
-      t1 <- n_t[[m-1]][k] 
+    run_out <- vector("list", length = runs)
+    for (s in (1:runs) ) {
       
-      t2 <- (r_vals[k]*n_t[[m-1]][k])
+      # generate the competition coefficients
       
-      # code the influence of other species
-      z <- alpha[(alpha$j %in% spp_n[!(spp_n %in% k)]) & alpha$i == k, ]$alpha_vals
+      # set up the permutations between species
+      alpha <- 
+        as.data.frame(gtools::permutations(n = spp_n, r = 2, v = c(1:spp_n), repeats.allowed = FALSE))
       
-      t3 <- (1-sum(z*n_t[[m-1]][-k])/k_vals[k])
+      names(alpha) <- c("j", "i")
       
-      n_t[[m]][k] <- t1 + ((r_vals[k]*t2)*t3)
+      # add the alpha values to the alpha val dataframe
+      alpha$alpha_vals <- 
+        truncnorm::rtruncnorm(n = nrow(alpha), a = 0, b = 1.2, mean = m_alpha, sd = sd_alpha)
       
-      if (n_t[[m]][k] < 0.2) { n_t[[m]][k] <- 0 }
+      # generate the carrying capacities for each species (K)
+      k_vals <- runif(n = spp_n, min = 3, max = 150)
+      
+      # generate growth rates values (r)
+      r_vals <- runif(n = spp_n, min = 0.01, max = 0.5)
+      
+      # code a nested for loop: for each time and for each species
+      
+      # create a vector of starting values for each species
+      n_vals <- rep(n0, times = spp_n)
+      
+      # create an output list of species abundances for each time point
+      n_t <- vector("list", length = t)
+      n_t
+      
+      # fill the first time point with starting abundances
+      n_t[[1]] <- n_vals
+      
+      # for each time point t
+      for(m in seq(from = 2, to = t, by = 1)){
+        
+        # for each species k
+        for (k in seq(from = 1, to = spp_n, by = 1)) {
+          
+          t1 <- n_t[[m-1]][k] 
+          
+          t2 <- (r_vals[k]*n_t[[m-1]][k])
+          
+          # code the influence of other species
+          z <- alpha[(alpha$j %in% spp_n[!(spp_n %in% k)]) & alpha$i == k, ]$alpha_vals
+          
+          t3 <- (1-sum(z*n_t[[m-1]][-k])/k_vals[k])
+          
+          n_t[[m]][k] <- t1 + ((r_vals[k]*t2)*t3)
+          
+          if (n_t[[m]][k] < 0.2) { n_t[[m]][k] <- 0 }
+          
+        }
+        
+      }
+      
+      # collapse this into a dataframe
+      df_n_t <- as.data.frame(do.call(rbind, n_t))
+      names(df_n_t) <- paste("sp_", 1:spp_n)
+      
+      # add a column for the time-point
+      df_n_t$time <- seq(from = 1, to = t, by = 1)
+      
+      # pull this into two columns
+      df_n_t <- 
+        df_n_t %>%
+        tidyr::pivot_longer(cols = starts_with(match = "sp_"),
+                            names_to = "species",
+                            values_to = "abundance") %>%
+        dplyr::arrange(species, time)
+      
+      # summarise these data
+      n_t_sum <- 
+        df_n_t %>%
+        dplyr::filter(time == last(time)) %>%
+        dplyr::summarise(realised_richness = sum(if_else(abundance > 0, 1, 0)),
+                         community_biomass = sum(abundance)) %>%
+        dplyr::mutate(species_pool = spp_n)
+      
+      run_out[[s]] <- n_t_sum
+      
+    }
+    
+    dplyr::bind_rows(run_out, .id = "run")
     
   }
 
-}
-
-# collapse this into a dataframe
-df_n_t <- as.data.frame(do.call(rbind, n_t))
-names(df_n_t) <- paste("sp_", 1:spp_n)
-
-# add a column for the time-point
-df_n_t$time <- seq(from = 1, to = t, by = 1)
-
-# pull this into two columns
-df_n_t <- 
-  df_n_t %>%
-  pivot_longer(cols = starts_with(match = "sp_"),
-               names_to = "species",
-               values_to = "abundance") %>%
-  arrange(species, time)
-
-# summarise these data
-n_t_sum <- 
-  df_n_t %>%
-  filter(time == last(time)) %>%
-  summarise(realised_richness = sum(if_else(abundance > 0, 1, 0)),
-            community_biomass = sum(abundance)) %>%
-  mutate(species_pool = spp_n)
-
-n_t_sum
+# test this function
+s_l_2010_mod(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
 
 
 
-# this is the output vector
-n_t[[m]][k] <-  
-  n_t[[m-1]][k] + (r_vals[k]*n_t[[m-1]][k])
 
 
-n_vals[1] + r_vals[1]*n_vals[1]
-
-
-spp_n[!(spp_n %in% 1)]
-
-(1 - n_vals[2])
-  
-z <- alpha[(alpha$j %in% spp_n[!(spp_n %in% 1)]) & alpha$i == 1, ]$alpha_vals
-
-t3 <- (1-sum(z*n_t[[2-1]][-1])/k_vals[1])
 
 
 ### load the data directly (i.e. extracted from the paper)
