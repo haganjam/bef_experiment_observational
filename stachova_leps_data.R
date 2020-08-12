@@ -59,11 +59,12 @@ s_l_2010_mod <-
   
   function(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2) {
     
+    # output list for each model run
     run_out <- vector("list", length = runs)
+    
     for (s in (1:runs) ) {
       
-      # generate the competition coefficients
-      
+      # generate alpha values for each species pair
       # set up the permutations between species
       alpha <- 
         as.data.frame(gtools::permutations(n = spp_n, r = 2, v = c(1:spp_n), repeats.allowed = FALSE))
@@ -81,7 +82,6 @@ s_l_2010_mod <-
       r_vals <- runif(n = spp_n, min = 0.01, max = 0.5)
       
       # code a nested for loop: for each time and for each species
-      
       # create a vector of starting values for each species
       n_vals <- rep(n0, times = spp_n)
       
@@ -98,17 +98,22 @@ s_l_2010_mod <-
         # for each species k
         for (k in seq(from = 1, to = spp_n, by = 1)) {
           
+          # first term in the equation
           t1 <- n_t[[m-1]][k] 
           
+          # second term in the equation
           t2 <- (r_vals[k]*n_t[[m-1]][k])
           
           # code the influence of other species
-          z <- alpha[(alpha$j %in% spp_n[!(spp_n %in% k)]) & alpha$i == k, ]$alpha_vals
+          z <- z <- alpha[!(alpha$j %in% 1) & alpha$i == 1, ]
           
-          t3 <- (1-sum(z*n_t[[m-1]][-k])/k_vals[k])
+          # third term in the equation
+          t3 <- (1-sum(z$alpha_vals*n_t[[m-1]][z$j])/k_vals[k])
           
+          # complete equation
           n_t[[m]][k] <- t1 + ((r_vals[k]*t2)*t3)
           
+          # if a species abundance drops below 0.2 it is considered extinct
           if (n_t[[m]][k] < 0.2) { n_t[[m]][k] <- 0 }
           
         }
@@ -149,6 +154,12 @@ s_l_2010_mod <-
 # test this function
 s_l_2010_mod(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
 
+
+# run this function for 10 species to check results from the paper
+test_out <- 
+  s_l_2010_mod(spp_n = 10, runs = 1, t = 4000, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
+
+test_out
 
 
 
