@@ -37,11 +37,8 @@ theme_meta <- function(base_size = 12, base_family = "") {
 
 ### code the simulation model
 
-# permutations are rowwise
-gtools::permutations(n = 3,r = 2, v = c(1, 2), repeats.allowed = FALSE)
-
 # set the number of species
-spp_n <- 2
+spp_n <- 10
 
 # generate the competition coefficients
 
@@ -70,18 +67,10 @@ k_vals <- runif(n = spp_n, min = 3, max = 150)
 r_vals <- runif(n = spp_n, min = 0.01, max = 0.5)
 
 
-# what do we have to work with?
-alpha
-
-k_vals
-
-r_vals
-
-
-### code a nested for loop: for each time and for each species
+# code a nested for loop: for each time and for each species
 
 # set the number of time points
-t <- 3
+t <- 10
 
 # start with the same starting values for all species
 n0 <- 3
@@ -96,18 +85,38 @@ n_t
 # fill the first time point with starting abundances
 n_t[[1]] <- n_vals
 
+# for each time point t
 for(m in seq(from = 2, to = t, by = 1)){
   
+  # for each species k
   for (k in seq(from = 1, to = spp_n, by = 1)) {
     
-    n_t[[m]][k] <-  
-      n_t[[m-1]][k] + (r_vals[k]*n_t[[m-1]][k])
+      t1 <- n_t[[m-1]][k] 
+      
+      t2 <- (r_vals[k]*n_t[[m-1]][k])
+      
+      # code the influence of other species
+      z <- alpha[(alpha$j %in% spp_n[!(spp_n %in% k)]) & alpha$i == k, ]$alpha_vals
+      
+      t3 <- (1-sum(z*n_t[[m-1]][-k])/k_vals[k])
+      
+      n_t[[m]][k] <- t1 + ((r_vals[k]*t2)*t3)
+      
+      if (n_t[[m]][k] < 0.2) { n_t[[m]][k] <- 0 }
     
   }
 
 }
 
+n_t
 
+n_t[[2]][1]
+
+
+
+# this is the output vector
+n_t[[m]][k] <-  
+  n_t[[m-1]][k] + (r_vals[k]*n_t[[m-1]][k])
 
 
 n_vals[1] + r_vals[1]*n_vals[1]
@@ -115,9 +124,11 @@ n_vals[1] + r_vals[1]*n_vals[1]
 
 spp_n[!(spp_n %in% 1)]
 
-(1 - n_vals[2]*alpha[alpha$j == 2 & alpha$i == 1, ]$alpha_vals)
+(1 - n_vals[2])
+  
+z <- alpha[(alpha$j %in% spp_n[!(spp_n %in% 1)]) & alpha$i == 1, ]$alpha_vals
 
-
+t3 <- (1-sum(z*n_t[[2-1]][-1])/k_vals[1])
 
 
 ### load the data directly (i.e. extracted from the paper)
