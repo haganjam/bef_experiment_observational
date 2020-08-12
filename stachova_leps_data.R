@@ -35,6 +35,7 @@ theme_meta <- function(base_size = 12, base_family = "") {
         axis.ticks.y = element_line(colour = "black", size = 0.4))
 }
 
+
 ### code the simulation model
 
 ### code the Stachova and Leps (2010) simulation model (function = s_l_2010_mod)
@@ -67,7 +68,7 @@ s_l_2010_mod <-
       # generate alpha values for each species pair
       # set up the permutations between species
       alpha <- 
-        as.data.frame(gtools::permutations(n = spp_n, r = 2, v = c(1:spp_n), repeats.allowed = FALSE))
+        as.data.frame(gtools::permutations(n = spp_n, r = 2, v = c(1:spp_n), repeats.allowed = TRUE))
       
       names(alpha) <- c("j", "i")
       
@@ -105,13 +106,13 @@ s_l_2010_mod <-
           t2 <- (r_vals[k]*n_t[[m-1]][k])
           
           # code the influence of other species
-          z <- z <- alpha[!(alpha$j %in% 1) & alpha$i == 1, ]
+          z <- alpha[(!(alpha$j %in% k) & alpha$i == k) | alpha$i == k, ]
           
           # third term in the equation
-          t3 <- (1-sum(z$alpha_vals*n_t[[m-1]][z$j])/k_vals[k])
+          t3 <- (1 - ( sum( (z$alpha_vals*n_t[[m-1]][z$j]) )/k_vals[k] ) )
           
           # complete equation
-          n_t[[m]][k] <- t1 + ((r_vals[k]*t2)*t3)
+          n_t[[m]][k] <- t1 + (t2*t3)
           
           # if a species abundance drops below 0.2 it is considered extinct
           if (n_t[[m]][k] < 0.2) { n_t[[m]][k] <- 0 }
@@ -157,17 +158,16 @@ s_l_2010_mod(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
 
 # run this function for 10 species to check results from the paper
 test_out <- 
-  s_l_2010_mod(spp_n = 10, runs = 50, t = 4000, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
+  s_l_2010_mod(spp_n = 10, runs = 200, t = 4000, n0 = 3, m_alpha = 0.8, sd_alpha = 0.2)
 
 test_out %>%
-  filter(community_biomass < 200) %>%
   ggplot(mapping = aes(x = realised_richness, y = community_biomass)) +
   geom_point() +
   geom_smooth(method = "lm")
 
 
 
-
+df_n_t
 
 
 ### load the data directly (i.e. extracted from the paper)
