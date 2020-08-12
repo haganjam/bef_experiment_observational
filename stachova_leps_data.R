@@ -5,6 +5,7 @@
 
 # load relevant libraries
 library(readr)
+library(gtools)
 library(dplyr)
 library(tidyr)
 library(purrr)
@@ -15,6 +16,7 @@ library(viridis)
 library(here)
 library(vegan)
 library(ggpubr)
+library(truncnorm)
 
 # create customised plotting theme
 theme_meta <- function(base_size = 12, base_family = "") {
@@ -33,6 +35,92 @@ theme_meta <- function(base_size = 12, base_family = "") {
         axis.ticks.y = element_line(colour = "black", size = 0.4))
 }
 
+### code the simulation model
+
+# permutations are rowwise
+gtools::permutations(n = 3,r = 2, v = c(1, 2), repeats.allowed = FALSE)
+
+# set the number of species
+spp_n <- 2
+
+# generate the competition coefficients
+
+# set up the permutations between species
+alpha <- 
+  as.data.frame(gtools::permutations(n = spp_n,r = 2, v = c(1:spp_n), repeats.allowed = FALSE))
+
+names(alpha) <- c("j", "i")
+
+# create a vector of competition coefficients for each permutation between species
+
+# set the mean alpha value
+m_alpha <- 0.6
+
+# set the sd alpha value
+sd_alpha <- 0.2
+
+# add the alpha values to the alpha val dataframe
+alpha$alpha_vals <- 
+  truncnorm::rtruncnorm(n = nrow(alpha), a = 0, b = 1.2, mean = m_alpha, sd = sd_alpha)
+
+# generate the carrying capacities for each species (K)
+k_vals <- runif(n = spp_n, min = 3, max = 150)
+
+# generate growth rates values (r)
+r_vals <- runif(n = spp_n, min = 0.01, max = 0.5)
+
+
+# what do we have to work with?
+alpha
+
+k_vals
+
+r_vals
+
+
+### code a nested for loop: for each time and for each species
+
+# set the number of time points
+t <- 3
+
+# start with the same starting values for all species
+n0 <- 3
+
+# create a vector of starting values for each species
+n_vals <- rep(n0, times = spp_n)
+
+# create an output list of species abundances for each time point
+n_t <- vector("list", length = t)
+n_t
+
+# fill the first time point with starting abundances
+n_t[[1]] <- n_vals
+
+for(m in seq(from = 2, to = t, by = 1)){
+  
+  for (k in seq(from = 1, to = spp_n, by = 1)) {
+    
+    n_t[[m]][k] <-  
+      n_t[[m-1]][k] + (r_vals[k]*n_t[[m-1]][k])
+    
+  }
+
+}
+
+
+
+
+n_vals[1] + r_vals[1]*n_vals[1]
+
+
+spp_n[!(spp_n %in% 1)]
+
+(1 - n_vals[2]*alpha[alpha$j == 2 & alpha$i == 1, ]$alpha_vals)
+
+
+
+
+### load the data directly (i.e. extracted from the paper)
 
 # load the species pool data
 spp_pool <- read_csv(here("data/stachova_leps_fig_1_data.csv"))
