@@ -76,6 +76,10 @@ s_l_2010_mod <-
       alpha$alpha_vals <- 
         truncnorm::rtruncnorm(n = nrow(alpha), a = 0, b = 1.2, mean = m_alpha, sd = sd_alpha)
       
+      # set the alpha vals for each species to 1
+      alpha <- alpha %>%
+        dplyr::mutate(alpha_vals = if_else(j == i, 1, alpha_vals))
+      
       # generate the carrying capacities for each species (K)
       k_vals <- runif(n = spp_n, min = 3, max = 150)
       
@@ -134,14 +138,14 @@ s_l_2010_mod <-
         tidyr::pivot_longer(cols = starts_with(match = "sp_"),
                             names_to = "species",
                             values_to = "abundance") %>%
-        dplyr::arrange(species, time)
+        dplyr::arrange(time, species)
       
       # summarise these data
       n_t_sum <- 
         df_n_t %>%
-        dplyr::filter(time == last(time)) %>%
+        dplyr::group_by(time) %>%
         dplyr::summarise(realised_richness = sum(if_else(abundance > 0, 1, 0)),
-                         community_biomass = sum(abundance)) %>%
+                         community_biomass = sum(abundance), .groups = "drop") %>%
         dplyr::mutate(species_pool = spp_n)
       
       run_out[[s]] <- n_t_sum
@@ -155,19 +159,64 @@ s_l_2010_mod <-
 # test this function
 s_l_2010_mod(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
 
+# run the model for different species pool diversities
 
-# run this function for 10 species to check results from the paper
-test_out <- 
-  s_l_2010_mod(spp_n = 10, runs = 200, t = 4000, n0 = 3, m_alpha = 0.8, sd_alpha = 0.2)
+# choose a set of species pool diversities
+spp_pools <- c(10, 20, 30, 40, 50, 60)
 
-test_out %>%
-  ggplot(mapping = aes(x = realised_richness, y = community_biomass)) +
+s_l_sim <- vector("list", length = length(spp_pools))
+
+for (i in seq_along(1:length(spp_pools))) {
+  
+  s_l_sim[[i]] <- 
+    s_l_2010_mod(spp_n = spp_pools[i], 
+                 runs = 50, 
+                 t = 1000, 
+                 n0 = 3, 
+                 m_alpha = 0.8, 
+                 sd_alpha = 0.2)
+  
+}
+
+# bind this into a dataframe
+s_l_sim <- bind_rows(s_l_sim, .id = "pool")
+
+# choose hypothetical plots to sample at a given time-point
+n_samp <- 12
+
+# only consider plots after x generations
+x_gen <- 150
+
+sim_samp <- 
+  s_l_sim %>%
+  filter(time > x_gen) %>%
+  group_by(time) %>%
+  slice_sample(n = n_samp) %>%
+  filter()
+
+# plot the relationship between realised diversity and biomass at different random time-points
+ggplot(data = sim_samp,
+       mapping = aes(x = realised_richness,
+                     y = community_biomass,
+                     colour = as.character(time) )) +
   geom_point() +
-  geom_smooth(method = "lm")
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_meta()
+
+# plot the relationship between species pool diversity and mean ecosystem functioning
+ggplot(data = sim_samp %>%
+         group_by(species_pool) %>%
+         summarise(community_biomass = mean(community_biomass)),
+       mapping = aes(x = species_pool,
+                     y = community_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_meta()
 
 
+# next step is to do the same thing as with the Jena data
 
-df_n_t
+
 
 
 ### load the data directly (i.e. extracted from the paper)
