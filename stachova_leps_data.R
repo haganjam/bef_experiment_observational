@@ -37,8 +37,24 @@ theme_meta <- function(base_size = 12, base_family = "") {
 
 ### code the simulation model
 
-# set the number of species
+# set the different species pools
 spp_n <- 10
+
+# set the number of runs per species pool
+
+# set the number of time points
+t <- 50
+
+# set the starting value for all species
+n0 <- 3
+
+# set the mean alpha value
+m_alpha <- 1
+
+# set the sd alpha value
+sd_alpha <- 0.2
+
+
 
 # generate the competition coefficients
 
@@ -47,14 +63,6 @@ alpha <-
   as.data.frame(gtools::permutations(n = spp_n,r = 2, v = c(1:spp_n), repeats.allowed = FALSE))
 
 names(alpha) <- c("j", "i")
-
-# create a vector of competition coefficients for each permutation between species
-
-# set the mean alpha value
-m_alpha <- 0.6
-
-# set the sd alpha value
-sd_alpha <- 0.2
 
 # add the alpha values to the alpha val dataframe
 alpha$alpha_vals <- 
@@ -66,14 +74,7 @@ k_vals <- runif(n = spp_n, min = 3, max = 150)
 # generate growth rates values (r)
 r_vals <- runif(n = spp_n, min = 0.01, max = 0.5)
 
-
 # code a nested for loop: for each time and for each species
-
-# set the number of time points
-t <- 10
-
-# start with the same starting values for all species
-n0 <- 3
 
 # create a vector of starting values for each species
 n_vals <- rep(n0, times = spp_n)
@@ -108,9 +109,30 @@ for(m in seq(from = 2, to = t, by = 1)){
 
 }
 
-n_t
+# collapse this into a dataframe
+df_n_t <- as.data.frame(do.call(rbind, n_t))
+names(df_n_t) <- paste("sp_", 1:spp_n)
 
-n_t[[2]][1]
+# add a column for the time-point
+df_n_t$time <- seq(from = 1, to = t, by = 1)
+
+# pull this into two columns
+df_n_t <- 
+  df_n_t %>%
+  pivot_longer(cols = starts_with(match = "sp_"),
+               names_to = "species",
+               values_to = "abundance") %>%
+  arrange(species, time)
+
+# summarise these data
+n_t_sum <- 
+  df_n_t %>%
+  filter(time == last(time)) %>%
+  summarise(realised_richness = sum(if_else(abundance > 0, 1, 0)),
+            community_biomass = sum(abundance)) %>%
+  mutate(species_pool = spp_n)
+
+n_t_sum
 
 
 
