@@ -5,15 +5,12 @@
 
 # load relevant libraries
 library(readr)
-library(gtools)
 library(dplyr)
+library(gtools)
 library(tidyr)
-library(purrr)
 library(ggplot2)
 library(broom)
-library(RColorBrewer)
 library(viridis)
-library(here)
 library(vegan)
 library(ggpubr)
 library(truncnorm)
@@ -36,90 +33,130 @@ theme_meta <- function(base_size = 12, base_family = "") {
 }
 
 
-### code the simulation model
-
 ### code the Stachova and Leps (2010) simulation model (function = s_l_2010_mod)
 
-# parameter description
-# spp_n - number of species in the initial colonising pool
-# runs - number of independent runs with different randomly drawn parameters (i.e. K, r and alphas)
-# t - number of time-steps to run the model for
-# n0 - starting abundance of all species
-# m_alpha - mean alpha value when drawing from truncated normal
-# sd_alpha - sd alpha value when drawing from truncated normal
+# explanation of the default values for the model parameters
 
-# outputs a dataframe with:
-# run (i.e. model run with randomly drawn parameter values)
-# realised richness (i.e. number of species leftover)
-# community biomass (i.e. sum of all species abundances)
-# species pool (i.e. number of species initially allowed to colonise)
+# number of species in the regional species pool
+reg_pool = 100 
 
-# these properties are only exported for the final time-step in the model
+# number of time-steps
+t_steps = 20
 
-s_l_2010_mod <- 
+# starting population size of each species
+n0 = 3
+
+# parameters of the truncated normal distribution used for generating the competition coeffficients (alpha)
+a_mean = 1
+a_sd = 0.2
+a_min = 0.2
+a_max = 1.2
+
+# set the alpha value for the effect of each species on itself
+a_spp = 1
+
+# parameters of the uniform distribution used for generating the carrying capacities (K)
+k_min = 3
+k_max = 150
+
+# parameters of the uniform distribution used for generating the intrinsic growth rates (r)
+r_min = 0.01
+r_max = 0.5
+
+# set up a vector of local species pools (or species richness treatments)
+local_species_pools = c(10, 20, 30, 40, 50, 60)
+
+# set the number of replicates of each local species pool
+reps = 10
+
+
+s_l_2010_mod <- function(reg_pool = 100,
+                         t_steps = 20, 
+                         n0 = 3,
+                         a_mean = 1, a_sd = 0.2, a_min = 0.2, a_max = 1.2, a_spp = 1,
+                         k_min = 3, k_max = 150,
+                         r_min = 0.01, r_max = 0.5, 
+                         lsp = c(10, 20, 30, 40, 50, 60),
+                         reps = 10) {
   
-  function(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2) {
+  # set up the permutations between species for the competition coefficients
+  al <- as.data.frame(gtools::permutations(n = reg_pool, r = 2, v = c(1:reg_pool), repeats.allowed = TRUE))
+  names(al) <- c("j", "i")
+  
+  # add alpha values generated from a truncated normal distribution for each species pair
+  al$alpha_vals <- truncnorm::rtruncnorm(n = nrow(al), a = a_min, b = a_max, mean = a_mean, sd = a_sd)
+  
+  # set the alpha value for the effect of each species on itself to one
+  al <- dplyr::mutate(al, alpha_vals = dplyr::if_else(j == i, a_spp, alpha_vals))
+  
+  # generate the carrying capacities (K) for each species from the uniform distribution
+  k <- runif(n = reg_pool, min = k_min, max = k_max)
+  
+  # generate growth rates values (r) for each species from the uniform distribution
+  r <- runif(n = reg_pool, min = r_min, max = r_max)
+  
+  
+  # for each replicate (u)
+  run_out <- vector("list", length = reps)
+  
+  for (u in seq(from = 1, to = reps, by = 1)) {
     
-    # output list for each model run
-    run_out <- vector("list", length = runs)
+    # for each local species pool (or species richness treatment), (s)
+    lsp_out <- vector("list", length = length(lsp))
     
-    for (s in (1:runs) ) {
+    for (s in seq(from = 1, to = length(lsp), by = 1) ) {
       
-      # generate alpha values for each species pair
-      # set up the permutations between species
-      alpha <- 
-        as.data.frame(gtools::permutations(n = spp_n, r = 2, v = c(1:spp_n), repeats.allowed = TRUE))
+      # sample lsp[s] species from the regional species pool
+      sp_sub <- sample(x = c(1:reg_pool), size = lsp[s], replace = FALSE)
       
-      names(alpha) <- c("j", "i")
+      # get the competition coefficients for this set of species
+      a_sub <- al[al$j %in% sp_sub, ]
       
-      # add the alpha values to the alpha val dataframe
-      alpha$alpha_vals <- 
-        truncnorm::rtruncnorm(n = nrow(alpha), a = 0, b = 1.2, mean = m_alpha, sd = sd_alpha)
+      # get the carrying capacities for this set of species
+      k_sub <- k[sp_sub]
       
-      # set the alpha vals for each species to 1
-      alpha <- alpha %>%
-        dplyr::mutate(alpha_vals = if_else(j == i, 1, alpha_vals))
+      # get the growth rates for this set of species
+      r_sub <- r[sp_sub]
       
-      # generate the carrying capacities for each species (K)
-      k_vals <- runif(n = spp_n, min = 3, max = 150)
-      
-      # generate growth rates values (r)
-      r_vals <- runif(n = spp_n, min = 0.01, max = 0.5)
       
       # code a nested for loop: for each time and for each species
+      
       # create a vector of starting values for each species
-      n_vals <- rep(n0, times = spp_n)
+      n_vals <- rep(n0, times = lsp[s])
       
       # create an output list of species abundances for each time point
-      n_t <- vector("list", length = t)
+      n_t <- vector("list", length = t_steps)
       n_t
       
       # fill the first time point with starting abundances
       n_t[[1]] <- n_vals
       
-      # for each time point t
-      for(m in seq(from = 2, to = t, by = 1)){
+      # for each time point m
+      for(m in seq(from = 2, to = t_steps, by = 1)){
         
-        # for each species k
-        for (k in seq(from = 1, to = spp_n, by = 1)) {
+        # for each species g
+        for (g in seq(from = 1, to = length(sp_sub), by = 1)) {
           
           # first term in the equation
-          t1 <- n_t[[m-1]][k] 
+          t1 <- n_t[[m-1]][g] 
           
           # second term in the equation
-          t2 <- (r_vals[k]*n_t[[m-1]][k])
+          t2 <- (r_sub[g]*n_t[[m-1]][g])
           
-          # code the influence of other species
-          z <- alpha[(!(alpha$j %in% k) & alpha$i == k) | alpha$i == k, ]
+          # subset out competition coefficients relevant to species k
+          z <- a_sub[(!(a_sub$j %in% sp_sub[g]) & a_sub$i == sp_sub[g]) | a_sub$i == sp_sub[g], ]
+          
+          # multiply effect of species j on species k by population size of species j and sum
+          y <- sum( (z$alpha_vals*n_t[[m-1]][match(x = z$j, table = sp_sub)]) )
           
           # third term in the equation
-          t3 <- (1 - ( sum( (z$alpha_vals*n_t[[m-1]][z$j]) )/k_vals[k] ) )
+          t3 <- 1 - (y/k_sub[g])
           
-          # complete equation
-          n_t[[m]][k] <- t1 + (t2*t3)
+          # use three terms in the full equation
+          n_t[[m]][g] <- t1 + (t2*t3)
           
           # if a species abundance drops below 0.2 it is considered extinct
-          if (n_t[[m]][k] < 0.2) { n_t[[m]][k] <- 0 }
+          if (n_t[[m]][g] < 0.2) { n_t[[m]][g] <- 0 }
           
         }
         
@@ -127,10 +164,10 @@ s_l_2010_mod <-
       
       # collapse this into a dataframe
       df_n_t <- as.data.frame(do.call(rbind, n_t))
-      names(df_n_t) <- paste("sp_", 1:spp_n)
+      names(df_n_t) <- paste("sp_", 1:lsp[s])
       
       # add a column for the time-point
-      df_n_t$time <- seq(from = 1, to = t, by = 1)
+      df_n_t$time <- seq(from = 1, to = t_steps, by = 1)
       
       # pull this into two columns
       df_n_t <- 
@@ -144,175 +181,162 @@ s_l_2010_mod <-
       n_t_sum <- 
         df_n_t %>%
         dplyr::group_by(time) %>%
-        dplyr::summarise(realised_richness = sum(if_else(abundance > 0, 1, 0)),
+        dplyr::summarise(realised_richness = sum(dplyr::if_else(abundance > 0, 1, 0)),
                          community_biomass = sum(abundance), .groups = "drop") %>%
-        dplyr::mutate(species_pool = spp_n)
+        dplyr::mutate(species_pool = lsp[s])
       
-      run_out[[s]] <- n_t_sum
+      lsp_out[[s]] <- n_t_sum
       
     }
     
-    dplyr::bind_rows(run_out, .id = "run")
+    run_out[[u]] <- bind_rows(lsp_out)
     
   }
+  
+  bind_rows(run_out, .id = "replicate")
+  
+}
+
 
 # test this function
-s_l_2010_mod(spp_n = 10, runs = 10, t = 20, n0 = 3, m_alpha = 1, sd_alpha = 0.2)
 
-# run the model for different species pool diversities
+s_l_2010_mod(reg_pool = 100,
+             t_steps = 10, 
+             n0 = 3,
+             a_mean = 1, a_sd = 0.2, a_min = 0.2, a_max = 1.2, a_spp = 1,
+             k_min = 3, k_max = 150,
+             r_min = 0.01, r_max = 0.5, 
+             lsp = c(10, 20, 30, 40, 50, 60),
+             reps = 10)
 
-# choose a set of species pool diversities
-spp_pools <- c(10, 20, 30, 40, 50, 60)
 
-s_l_sim <- vector("list", length = length(spp_pools))
+# run this function for a reduced set of time points and parameters
 
-for (i in seq_along(1:length(spp_pools))) {
-  
-  s_l_sim[[i]] <- 
-    s_l_2010_mod(spp_n = spp_pools[i], 
-                 runs = 50, 
-                 t = 1000, 
-                 n0 = 3, 
-                 m_alpha = 0.8, 
-                 sd_alpha = 0.2)
-  
-}
+pp_fig_s_l_mod <-
+  s_l_2010_mod(reg_pool = 100,
+               t_steps = 1000, 
+               n0 = 3,
+               a_mean = 1, a_sd = 0.2, a_min = 0.2, a_max = 1.2, a_spp = 1,
+               k_min = 3, k_max = 150,
+               r_min = 0.01, r_max = 0.5, 
+               lsp = c(10, 20, 30, 40, 50, 60),
+               reps = 30)
 
-# bind this into a dataframe
-s_l_sim <- bind_rows(s_l_sim, .id = "pool")
+
+
+### rough plots for presubmission proposal
+
+# plot species pool diversity and realised diversity at the final time point
+
+# get final time point
+tn <- max(unique(pp_fig_s_l_mod$time))
+
+# choose species pool diversities to consider
+sp_p_plot <- c(10, 20, 60)
+
+# check range of biomass values
+range(pull(filter(pp_fig_s_l_mod, time == tn), community_biomass))
+y_ran <- seq(from = 100, to = 170, by = 20)
+
+pp_fig_1b_1 <- 
+  pp_fig_s_l_mod %>%
+  filter(time == tn) %>%
+  ggplot(data = .,
+         mapping = aes(x = species_pool, y = community_biomass)) +
+  geom_jitter(size = 3, width = 1) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.75) +
+  scale_x_continuous(limits = c(5, 65), breaks = unique(pull(filter(pp_fig_s_l_mod, time == tn), species_pool)) ) +
+  scale_y_continuous(limits = range(pull(filter(pp_fig_s_l_mod, time == tn), community_biomass)), breaks = y_ran) +
+  ylab("community biomass") +
+  xlab("local species pool diversity") +
+  theme_meta() 
+
+pp_fig_1b_2 <- 
+  pp_fig_s_l_mod %>%
+  filter(time == tn, species_pool %in% sp_p_plot) %>%
+  mutate(`LSP diversity` = as.character(species_pool)) %>%
+  ggplot(data = .,
+         mapping = aes(x = realised_richness, y = community_biomass, colour = `LSP diversity`)) +
+  geom_jitter(size = 3, width = 0.1) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.75) +
+  ylab("") +
+  xlab("local realised diversity") +
+  scale_colour_viridis_d(option = "D") +
+  scale_y_continuous(limits = range(pull(filter(pp_fig_s_l_mod, time == tn), community_biomass)), breaks = y_ran) +
+  theme_meta() +
+  theme(legend.position = c(0.75, 0.2),
+        legend.key = element_rect(fill = NA))
+
+
+pp_fig_1b_12 <- ggarrange(pp_fig_1b_1, pp_fig_1b_2, nrow = 1)
+
+
+
+### plots for pre-proposal submission i.e. random samples of different years
 
 # choose hypothetical plots to sample at a given time-point
-n_samp <- 12
+n_samp <- 20
 
 # only consider plots after x generations
-x_gen <- 150
+x_gen <- 500
+
+# how many time points to sample?
+t_p <- 3
 
 sim_samp <- 
-  s_l_sim %>%
+  pp_fig_s_l_mod %>%
   filter(time > x_gen) %>%
+  filter(time %in% sample(x = c(x_gen:max(unique(pp_fig_s_l_mod$time))), size = t_p) ) %>%
   group_by(time) %>%
-  slice_sample(n = n_samp) %>%
-  filter()
+  slice_sample(n = n_samp)
+
+# output a set of breaks
+range(sim_samp$community_biomass)
+y_ran <- seq(from = 100, to = 170, by = 20)
 
 # plot the relationship between realised diversity and biomass at different random time-points
-ggplot(data = sim_samp,
-       mapping = aes(x = realised_richness,
-                     y = community_biomass,
-                     colour = as.character(time) )) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
+pp_fig_1_e_1 <-
+  ggplot(data = sim_samp %>%
+           ungroup() %>%
+           mutate(time = as.character(rep(c(1:t_p), each = n_samp)) ),
+         mapping = aes(x = realised_richness,
+                       y = community_biomass,
+                       colour = time )) +
+  geom_jitter(size = 3, width = 0.1) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.75) +
+  scale_y_continuous(limits = range(sim_samp$community_biomass), breaks = y_ran) +
+  ylab("") +
+  xlab("local realised diversity") +
+  scale_colour_viridis_d(option = "D") +
+  theme(legend.position = c(0.85, 0.2),
+        legend.key = element_rect(fill = NA)) +
   theme_meta()
+
+pp_fig_1_e_1
+
 
 # plot the relationship between species pool diversity and mean ecosystem functioning
-ggplot(data = sim_samp %>%
-         group_by(species_pool) %>%
-         summarise(community_biomass = mean(community_biomass)),
-       mapping = aes(x = species_pool,
-                     y = community_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_meta()
-
-
-# next step is to do the same thing as with the Jena data
-
-
-
-
-### load the data directly (i.e. extracted from the paper)
-
-# load the species pool data
-spp_pool <- read_csv(here("data/stachova_leps_fig_1_data.csv")) 
-
-# round off the species pool and realised diversity data to the nearest integer
-
-spp_pool <- 
-  spp_pool %>%
-  mutate(unique_id = 1:n(),
-         five_num = rep(LETTERS[1:5], times = 10),
-         spp_pool_round = rep(seq(from = 10, to = 100, by = 10), each = 5)) %>%
-  select(-spp_pool)
-
-# biomass
-bio_graph <- 
-  spp_pool %>%
-  select(-realised_diversity, -unique_id) %>%
-  spread(key = "five_num", value = "biomass")
-
-box_1_fig_1a <- 
-  ggplot(data = bio_graph) +
-  geom_boxplot(mapping = aes(x = spp_pool_round, group = spp_pool_round,
-                             ymin = A, lower = B, middle = C, upper = D, ymax = E),
-               stat = "identity",
-               width = 4, fill = "grey88") +
-  scale_x_continuous(breaks = c(seq(from = 0, to = 100, by = 10)) ) +
+pp_fig_1_e_2 <-
+  ggplot(data = sim_samp %>%
+           ungroup() %>%
+           group_by(species_pool) %>%
+           summarise(community_biomass_m = mean(community_biomass),
+                     community_biomass_se = sd(community_biomass)/sqrt(n()) ),
+         mapping = aes(x = species_pool,
+                       y = community_biomass_m)) +
+  geom_errorbar(mapping = aes(ymin = community_biomass_m-community_biomass_se,
+                              ymax = community_biomass_m + community_biomass_se),
+                width = 0.1) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = FALSE, colour = "black", size = 0.75) +
+  scale_y_continuous(limits = range(sim_samp$community_biomass), breaks = y_ran) +
   ylab("community biomass") +
-  xlab(expression(paste("inoculated ", alpha, " diversity", sep = ""))) +
+  xlab("local species pool diversity") +
   theme_meta()
 
-box_1_fig_1a
+pp_fig_e_12 <- ggarrange(pp_fig_1_e_2 , pp_fig_1_e_1, nrow = 1)
 
 
-# realised diversity
-realised_graph <- 
-  spp_pool %>%
-  select(-biomass, -unique_id) %>%
-  spread(key = "five_num", value = "realised_diversity")
-
-box_1_fig_1a_inset <- 
-  ggplot(data = realised_graph) +
-  geom_boxplot(aes(x = spp_pool_round, group = spp_pool_round,
-                   ymin = A, lower = B, middle = C, upper = D, ymax = E),
-               stat = "identity",
-               width = 4, fill = "grey88") +
-  scale_y_continuous(limits = c(1, 7.1)) +
-  scale_x_continuous(breaks = c(seq(from = 0, to = 100, by = 20)) ) +
-  ylab(expression(paste("realised ", alpha, " diversity", sep = ""))) +
-  xlab(expression(paste("inoculated ", alpha, " diversity", sep = ""))) +
-  theme_meta() +
-  theme(axis.title.x = element_text(colour ="black", size = 8, face = "plain", margin=margin(2.5,0,0,0,"pt")),
-        axis.title.y = element_text(colour = "black", size = 8, face = "plain", margin=margin(0,2.5,0,0,"pt")),
-        axis.text.x = element_text(colour = "black", size=8, face = "plain",  margin=margin(10,0,0,0,"pt")),
-        axis.text.y = element_text(colour ="black", size=8, face = "plain", margin=margin(0,10,0,0,"pt")))
-
-# add the inset to the fig 1a
-box_1_fig_1a <- 
-  box_1_fig_1a +
-  annotation_custom(ggplotGrob(box_1_fig_1a_inset), 
-                    xmin = 55, xmax = 105, 
-                    ymin = 130, ymax = 170)
-
-ggsave(filename = here("figures/box_1_fig1a.png"), plot = box_1_fig_1a,
-       dpi = 500, units = "cm", width = 11, height = 10)
-
-
-# load the constant species pool data
-real_dat <- read_csv(here("data/stachova_leps_fig_2_data.csv"))
-
-box_1_fig_1ab <- 
-  real_dat %>%
-  split(.$spp_pool) %>%
-  map(~ ggplot(data = .,
-               aes(x = realised_div, y = biomass)) +
-        geom_jitter(width = 0.1, size = 1) +
-        geom_smooth(method = "lm", alpha = 0.2, size = 0.1, colour = "black") +
-        scale_x_continuous(limits = c(0, 12), breaks = seq(from = 2, to = 12, by = 2) ) +
-        ylab("community biomass") +
-        xlab(expression(paste("realised ", alpha, " diversity", sep = ""))) +
-        theme_meta() +
-        theme(axis.title.y = element_text(size = 9),
-              axis.title.x = element_text(size = 9),
-              axis.text.y = element_text(size = 9),
-              axis.text.x = element_text(size = 9)))
-
-box_1_fig_1ab_list <- list(box_1_fig_1ab[[1]], box_1_fig_1ab[[2]])
-names(box_1_fig_1ab_list) <- c(1:length(box_1_fig_1ab_list))
-
-for (i in seq_along(1:length(box_1_fig_1ab_list))) {
-  
-  ggsave(filename = paste0(here("figures"), "/box1_fig_1bc", names(box_1_fig_1ab_list)[i], ".png"), 
-         plot = box_1_fig_1ab_list[[i]], dpi = 500, units = "cm", width = 5, height = 5)
-}
 
 
 
