@@ -17,7 +17,8 @@ library(vegan)
 library(ggpubr)
 
 # create customised plotting theme
-theme_meta <- function(base_size = 12, base_family = "") {
+theme_meta <- 
+  function(base_size = 12, base_family = "") {
   theme(panel.background =  element_rect(fill = "white"), 
         panel.border =      element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
         axis.line.x = element_line(color="black", size = 0.2),
@@ -39,8 +40,6 @@ if(! dir.exists(here("figures"))){
 }
 
 
-### fig. 3, fig. s3, fig. s4
-
 # load the Jena community data
 jena_comm <- read_delim(here("data/Jena_Community_02-08.csv"), delim = ",")
 head(jena_comm)
@@ -51,43 +50,54 @@ jena_comm <- filter(jena_comm, !sowndiv %in% c(0))
 # create a vector of species names
 sp_names <- names(jena_comm)[51:110]
 
+# create a season variable for jena_comm
+unique(jena_comm$month)
+
+jena_comm <- 
+  jena_comm %>%
+  mutate(season = if_else(month %in% c("May", "Jun"), "spring", "summer"))
+
+# subset out the spring data only
+jena_comm <- 
+  jena_comm %>%
+  filter(season == "spring")
+
 # seperate the data into spp and site characteristics matrix
-site_dat <- select(jena_comm, all_of(-sp_names))
+site_dat <- select(jena_comm, -all_of(sp_names))
 
 sp_dat <- select(jena_comm, all_of(sp_names))
 
 # replace NAs in sp_dat with zeros to reflect absence
+lapply(sp_dat, function(x) { sum(if_else(is.na(x), 1, 0)) })
+
 sp_dat <- 
-  sp_dat %>% 
-  mutate_all(~replace(., is.na(.), 0))
+  sp_dat %>%
+  mutate(across(.cols = all_of(sp_names), ~replace(., is.na(.), 0)))
 
 # check if there are any -9999's in the species data
-sp_dat %>% 
-    filter_at(vars(sp_names), any_vars(. < 0)) # there are none!
+lapply(sp_dat, function(x) { sum(if_else(x < 0, 1, 0)) })
 
 # calculate the number of species in the surveyed 3 x 3 m plots
-rowSums(decostand(sp_dat, method = "pa")) # number of species
+rowSums(decostand(sp_dat, method = "pa"))
 
-# calculate the number of species in the surveyed 3 x 3 m plots with more than 1 % cover
-mutate_all(sp_dat, ~if_else(. == c(1), 0, .)) %>% 
-  decostand(method = "pa") %>%
-  rowSums()
-
-# calculate the number of species in the surveyed 3 x 3 m plots with more than 5 % cover
-mutate_all(sp_dat, ~if_else(. %in% c(1, 2), 0, .)) %>% 
-  decostand(method = "pa") %>%
-  rowSums()
-
-# add these observed species richness values to the site_dat dataset
+# add this observed species richness value to the site_dat dataframe
 site_dat <- 
   site_dat %>% 
-  mutate(observed_species = rowSums(decostand(sp_dat, method = "pa")),
-         observed_species_1 = mutate_all(sp_dat, ~if_else(. == c(1), 0, .)) %>% 
-           decostand(method = "pa") %>% 
-           rowSums(),
-         observed_species_5 = mutate_all(sp_dat, ~if_else(. %in% c(1, 2), 0, .)) %>% 
-           decostand(method = "pa") %>% 
-           rowSums())
+  mutate( observed_species = rowSums(decostand(sp_dat, method = "pa")) )
+
+# calculate the number of species observed across all time points i.e. observed species pool
+df_sp_pool <- 
+  bind_cols(select(site_dat, plotcode, time), sp_dat) %>%
+  group_by(plotcode) %>%
+  summarise(across(.cols = all_of(sp_names), ~sum(., na.rm = TRUE)), .groups = "drop")
+
+obs_sp_pool <- 
+  select(df_sp_pool, plotcode) %>%
+  mutate(observed_species_pool = rowSums(decostand(select(df_sp_pool, all_of(sp_names)), method = "pa")) )
+
+# add the observed species pool diversity to the site_dat dataset
+site_dat <- 
+  full_join(site_dat, obs_sp_pool, by = "plotcode")
 
 
 # use the jena_bio dataset to get plot-level (20 x 20 m) target biomass measurements
@@ -95,38 +105,108 @@ site_dat <-
 # load the Jena biomass data
 jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
 head(jena_bio)
-
-# remove the first plots that were not sown with any species
-jena_bio <- filter(jena_bio, !sowndiv %in% c(0))
-
-# examine the data and the variable names
-View(jena_bio)
 names(jena_bio)
 
-# extract relevant biomass variables
-site_bio_dat <- 
-  jena_bio %>% 
-  select(plotcode, block, plot, subsample, year, month, time, X, Y, sowndiv, target.biomass)
+# create a vector of species names
+sp_names <- names(jena_bio[, 85:144])
+
+# remove the first plots that were not sown with any species
+jena_bio <- filter(jena_bio, !(sowndiv %in% c(0)) )
+
+# remove species presence columns
+jena_bio <- select(jena_bio, -all_of(paste0("p", sp_names)))
+
+# create a season variable for jena_bio
+unique(jena_bio$month)
+
+jena_bio <- 
+  jena_bio %>%
+  mutate(season = if_else(month %in% c("May", "Jun"), "spring", "summer"))
+
+# subset out the spring data only
+jena_bio <- 
+  jena_bio %>%
+  filter(season == "spring")
+
+# replace the NAs with zeros
+jena_bio <- 
+  jena_bio %>%
+  mutate(across(.cols = all_of(sp_names), ~replace(., is.na(.), 0)))
+
+# remove rows of the data where there are missing values i.e. -9999 values in the sp_names
+jena_bio <- 
+  jena_bio %>%
+  filter_at(all_of(sp_names), all_vars(. >= 0 ) )
+
+# only take the first sub-sample
+unique(jena_bio$subsample)
+
+jena_bio <- 
+  jena_bio %>%
+  filter(subsample %in% c(1, 2, 3))
+
+# select out the relevant columns
+jena_bio <- 
+  jena_bio %>%
+  select(plotcode, season, time, subsample, sowndiv, target.biomass, all_of(sp_names))
+
+# for each species and for target biomass, take the average value
+jena_bio <- 
+  jena_bio %>%
+  group_by(plotcode, time) %>%
+  summarise(across(.cols = all_of(c("sowndiv", "target.biomass", sp_names)), ~mean(., na.rm = TRUE) ), .groups = "drop")
+
+# extract site variables
+site_bio <- 
+  jena_bio %>%
+  select(-all_of(sp_names))
 
 # check for NA's in the dataset
-site_bio_dat %>% filter_all(any_vars(is.na(.))) # only NA's in the coordinates
+lapply(site_bio, function(x) { sum(if_else(is.na(x), 1, 0)) })
 
 # check for any -9999's in the dataset
-site_bio_dat %>% filter_all(any_vars(. < 0)) # yes there is one sub-sample with missing biomass data
+lapply(site_bio, function(x) { sum(if_else(x < 0, 1, 0)) })
 
-# exclude this missing subplot observation from the dataset
-site_bio_dat <- 
-  site_bio_dat %>% 
-  filter(target.biomass >= 0)
+# extract out the individual species' biomass
+sp_bio <- 
+  jena_bio %>%
+  select(all_of(sp_names))
 
-# calculate the mean target.biomass for each plot for each time point
-site_bio_dat <- 
-  site_bio_dat %>% 
-  group_by(plotcode, time) %>%
-  summarise(target_biomass_m = mean(target.biomass, na.rm = TRUE),
-            target_biomass_sd = sd(target.biomass, na.rm = TRUE),
-            target_biomass_n = n()) %>%
-  ungroup()
+# check for NA's in the dataset
+lapply(sp_bio, function(x) { sum(if_else(is.na(x), 1, 0)) })
+
+# check for any -9999's in the dataset
+lapply(sp_bio, function(x) { sum(if_else(x < 0, 1, 0), na.rm = TRUE) })
+
+# check if biomass calculated from individual species correlates with target.biomass reported
+cor(rowSums(sp_bio), site_bio$target.biomass)
+
+# add species-specific biomass and observed species richness to the site_dat data
+site_bio <- 
+  site_bio %>%
+  mutate(comm_biomass = rowSums(sp_bio),
+         observed_sr = rowSums(decostand(sp_bio, method = "pa")) )
+
+ggplot(data = filter(site_bio, time == max(time)),
+       mapping = aes(x = sowndiv, y = comm_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw()
+
+ggplot(data = filter(site_bio, time == max(time), sowndiv < 60),
+       mapping = aes(x = observed_sr, y = comm_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw()
+
+ggplot(data = filter(site_bio, time == max(time), sowndiv < 60, sowndiv > 2),
+       mapping = aes(x = observed_sr, y = comm_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~as.character(sowndiv), scales = "free") +
+  theme_bw()
+
+
 
 
 # add the biomass measurements to the site_dat data
@@ -139,13 +219,14 @@ site_dat <-
 # make a list of relevant variable names
 var_names <- c("plotcode", "year", "season", "month", "time", "X", "Y", "sowndiv",
                "numfg", "numgrass", "numsherb", "numtherb", "numleg",
-               "observed_species", "observed_species_1", "observed_species_5", 
-               "target_biomass_m", "target_biomass_sd", "target_biomass_n")
+               "observed_species", "target_biomass_m")
 
 # join the biomass data to the site data
 jena_dat <- 
-  full_join(site_dat, site_bio_dat, by = c("plotcode", "time")) %>% 
-  select(var_names)
+  full_join(site_dat, site_bio, by = c("plotcode", "time")) %>% 
+  select(all_of(var_names))
+
+View(jena_dat)
 
 
 # calculate the total number of species observed across years
