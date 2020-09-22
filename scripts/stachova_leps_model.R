@@ -164,7 +164,7 @@ s_l_2010_mod <- function(reg_pool = 100,
       
       # collapse this into a dataframe
       df_n_t <- as.data.frame(do.call(rbind, n_t))
-      names(df_n_t) <- paste("sp_", 1:lsp[s])
+      names(df_n_t) <- paste0("sp_", sp_sub)
       
       # add a column for the time-point
       df_n_t$time <- seq(from = 1, to = t_steps, by = 1)
