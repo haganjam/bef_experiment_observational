@@ -169,10 +169,11 @@ perm_grid <-
   perm_grid %>%
   filter( !(Var1 == 1 & Var2 == 1) )
 
-perm_grid <- perm_grid[1:2, ]
-
 # set the number of replicates
-reps <- 5
+reps <- 20
+
+# set the number of plots
+plots <- 12
 
 est_out <- vector("list", length = nrow(perm_grid))
 
@@ -183,15 +184,19 @@ for (s in c(1:nrow(perm_grid)) ) {
     filter(sowndiv >= perm_grid$Var1[s],
            sowndiv <= perm_grid$Var2[s])
   
-  x <- 
-    x %>%
-    mutate(comm_biomass = as.numeric(scale(x$comm_biomass, center = TRUE, scale = TRUE)))
   
   rep_out <- vector("list", length = reps)
   
   for (i in c(1:reps) ) {
     
-    z <- broom::tidy(lm(comm_biomass ~ observed_sr, data = x))
+    y <- x[sample(1:nrow(x), size = plots), ]
+    
+    y <- 
+      y %>%
+      mutate(comm_biomass = as.numeric(scale(comm_biomass, center = TRUE, scale = TRUE)),
+             observed_sr = as.numeric(scale(observed_sr, center = TRUE, scale = TRUE)))
+    
+    z <- broom::tidy(lm(comm_biomass ~ observed_sr, data = y))
     
     z <-
       z %>%
@@ -211,46 +216,16 @@ for (s in c(1:nrow(perm_grid)) ) {
   
 }
 
-est_out[[1]] %>%
-  View()
+ran_est_out <- 
+  bind_rows(est_out, .id = "sowndiv_comb")
 
+names(ran_est_out)
 
-y <- broom::tidy(lm(comm_biomass ~ observed_sr, data = df))
-
-est_out[i] <- y
-
-
-
-est_out <- vector()
-for (i in 1:100) {
-  
-  df <- ran_bio[sample(1:nrow(ran_bio), size = 30), ]
-  
-  df$comm_biomass <- as.numeric(scale(df$comm_biomass, center = TRUE, scale = TRUE))
-  
-  lm1 <- broom::tidy(lm(comm_biomass ~ observed_sr, data = df))
-  
-  s_out[i] <- lm1[lm1$term == "observed_sr", ]$estimate
-  
-}
-
-hist(s_out)
-
-df <- ran_bio[sample(1:nrow(ran_bio), size = 20), ]
-
-df$comm_biomass <- as.numeric(scale(df$comm_biomass, center = TRUE, scale = TRUE))
-
-lm1 <- lm(comm_biomass ~ observed_sr, data = df)
-
-lm1 <- tidy(lm1)
-
-
-
-
-ran_bio[sample(1:nrow(ran_bio), size = 20), ]
-
-
-
+ran_est_out %>%
+  filter(term == "observed_sr", observed_sr_range > 1) %>%
+  ggplot(data = .,
+         mapping = aes(x = sowndiv_range, y = estimate)) +
+  geom_point()
 
 
 
