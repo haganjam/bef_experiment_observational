@@ -39,69 +39,6 @@ if(! dir.exists(here("figures"))){
   dir.create(here("figures"))
 }
 
-
-# load the Jena community data
-jena_comm <- read_delim(here("data/Jena_Community_02-08.csv"), delim = ",")
-head(jena_comm)
-
-# remove the first plots that were not sown with any species
-jena_comm <- filter(jena_comm, !sowndiv %in% c(0))
-
-# create a vector of species names
-sp_names <- names(jena_comm)[51:110]
-
-# create a season variable for jena_comm
-unique(jena_comm$month)
-
-jena_comm <- 
-  jena_comm %>%
-  mutate(season = if_else(month %in% c("May", "Jun"), "spring", "summer"))
-
-# subset out the spring data only
-jena_comm <- 
-  jena_comm %>%
-  filter(season == "spring")
-
-# seperate the data into spp and site characteristics matrix
-site_dat <- select(jena_comm, -all_of(sp_names))
-
-sp_dat <- select(jena_comm, all_of(sp_names))
-
-# replace NAs in sp_dat with zeros to reflect absence
-lapply(sp_dat, function(x) { sum(if_else(is.na(x), 1, 0)) })
-
-sp_dat <- 
-  sp_dat %>%
-  mutate(across(.cols = all_of(sp_names), ~replace(., is.na(.), 0)))
-
-# check if there are any -9999's in the species data
-lapply(sp_dat, function(x) { sum(if_else(x < 0, 1, 0)) })
-
-# calculate the number of species in the surveyed 3 x 3 m plots
-rowSums(decostand(sp_dat, method = "pa"))
-
-# add this observed species richness value to the site_dat dataframe
-site_dat <- 
-  site_dat %>% 
-  mutate( observed_species = rowSums(decostand(sp_dat, method = "pa")) )
-
-# calculate the number of species observed across all time points i.e. observed species pool
-df_sp_pool <- 
-  bind_cols(select(site_dat, plotcode, time), sp_dat) %>%
-  group_by(plotcode) %>%
-  summarise(across(.cols = all_of(sp_names), ~sum(., na.rm = TRUE)), .groups = "drop")
-
-obs_sp_pool <- 
-  select(df_sp_pool, plotcode) %>%
-  mutate(observed_species_pool = rowSums(decostand(select(df_sp_pool, all_of(sp_names)), method = "pa")) )
-
-# add the observed species pool diversity to the site_dat dataset
-site_dat <- 
-  full_join(site_dat, obs_sp_pool, by = "plotcode")
-
-
-# use the jena_bio dataset to get plot-level (20 x 20 m) target biomass measurements
-
 # load the Jena biomass data
 jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
 head(jena_bio)
@@ -187,24 +124,138 @@ site_bio <-
   mutate(comm_biomass = rowSums(sp_bio),
          observed_sr = rowSums(decostand(sp_bio, method = "pa")) )
 
+# remove the 60 species treatment as it is not really relevant
+site_bio <- 
+  site_bio %>%
+  filter(sowndiv < 60)
+
+
+# Box 1 analysis
 ggplot(data = filter(site_bio, time == max(time)),
        mapping = aes(x = sowndiv, y = comm_biomass)) +
   geom_point() +
   geom_smooth(method = "lm") +
   theme_bw()
 
-ggplot(data = filter(site_bio, time == max(time), sowndiv < 60),
+ggplot(data = filter(site_bio, time == max(time)),
        mapping = aes(x = observed_sr, y = comm_biomass)) +
   geom_point() +
   geom_smooth(method = "lm") +
   theme_bw()
 
-ggplot(data = filter(site_bio, time == max(time), sowndiv < 60, sowndiv > 2),
+ggplot(data = filter(site_bio, time == max(time)),
        mapping = aes(x = observed_sr, y = comm_biomass)) +
   geom_point() +
   geom_smooth(method = "lm") +
   facet_wrap(~as.character(sowndiv), scales = "free") +
   theme_bw()
+
+
+# Random sampling of data at final time-point
+
+ran_bio <- 
+  filter(site_bio, time == max(time))
+
+perm_grid <- 
+  expand.grid(sort(unique(ran_bio$sowndiv)), 
+              sort(unique(ran_bio$sowndiv), decreasing = TRUE) )
+
+perm_grid <- 
+  perm_grid %>%
+  filter(Var1 <= Var2)
+
+# remove the 1-1 species pool
+perm_grid <- 
+  perm_grid %>%
+  filter( !(Var1 == 1 & Var2 == 1) )
+
+perm_grid <- perm_grid[1:2, ]
+
+# set the number of replicates
+reps <- 5
+
+est_out <- vector("list", length = nrow(perm_grid))
+
+for (s in c(1:nrow(perm_grid)) ) {
+  
+  x <- 
+    ran_bio %>%
+    filter(sowndiv >= perm_grid$Var1[s],
+           sowndiv <= perm_grid$Var2[s])
+  
+  x <- 
+    x %>%
+    mutate(comm_biomass = as.numeric(scale(x$comm_biomass, center = TRUE, scale = TRUE)))
+  
+  rep_out <- vector("list", length = reps)
+  
+  for (i in c(1:reps) ) {
+    
+    z <- broom::tidy(lm(comm_biomass ~ observed_sr, data = x))
+    
+    z <-
+      z %>%
+      dplyr::mutate(observed_sr_min = min(x$observed_sr),
+             observed_sr_max = max(x$observed_sr)) %>%
+      dplyr::mutate(observed_sr_range = (observed_sr_max - observed_sr_min) )
+    
+    rep_out[[i]] <- z
+    
+  }
+  
+  est_out[[s]] <- 
+    dplyr::bind_rows(rep_out, .id = "rep") %>%
+    dplyr::mutate(sowndiv_low = perm_grid$Var1[s],
+                  sowndiv_upp = perm_grid$Var2[s]) %>%
+    dplyr::mutate(sowndiv_range = (sowndiv_upp - sowndiv_low) )
+  
+}
+
+est_out[[1]] %>%
+  View()
+
+
+y <- broom::tidy(lm(comm_biomass ~ observed_sr, data = df))
+
+est_out[i] <- y
+
+
+
+est_out <- vector()
+for (i in 1:100) {
+  
+  df <- ran_bio[sample(1:nrow(ran_bio), size = 30), ]
+  
+  df$comm_biomass <- as.numeric(scale(df$comm_biomass, center = TRUE, scale = TRUE))
+  
+  lm1 <- broom::tidy(lm(comm_biomass ~ observed_sr, data = df))
+  
+  s_out[i] <- lm1[lm1$term == "observed_sr", ]$estimate
+  
+}
+
+hist(s_out)
+
+df <- ran_bio[sample(1:nrow(ran_bio), size = 20), ]
+
+df$comm_biomass <- as.numeric(scale(df$comm_biomass, center = TRUE, scale = TRUE))
+
+lm1 <- lm(comm_biomass ~ observed_sr, data = df)
+
+lm1 <- tidy(lm1)
+
+
+
+
+ran_bio[sample(1:nrow(ran_bio), size = 20), ]
+
+
+
+
+
+
+
+
 
 
 
