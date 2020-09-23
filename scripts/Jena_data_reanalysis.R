@@ -107,10 +107,10 @@ site_bio <-
   mutate(comm_biomass = rowSums(sp_bio),
          observed_sr = rowSums(decostand(sp_bio, method = "pa")) )
 
-# remove the 60 species treatment as it is not really relevant
+# remove the 60 species treatment and the monocultures as it is not really relevant
 site_bio <- 
   site_bio %>%
-  filter(sowndiv < 60)
+  filter(sowndiv > 1, sowndiv < 60)
 
 
 # Box 1 analysis
@@ -135,7 +135,6 @@ ggplot(data = filter(site_bio, time == max(time)),
 
 
 # Random sampling of data at final time-point
-
 ran_bio <- 
   filter(site_bio, time == max(time))
 
@@ -147,13 +146,8 @@ perm_grid <-
   perm_grid %>%
   filter(Var1 <= Var2)
 
-# remove the 1-1 species pool
-perm_grid <- 
-  perm_grid %>%
-  filter( !(Var1 == 1 & Var2 == 1) )
-
 # set the number of replicates
-reps <- 20
+reps <- 30
 
 # set the number of plots
 plots <- 12
@@ -179,10 +173,13 @@ for (s in c(1:nrow(perm_grid)) ) {
       mutate(comm_biomass = as.numeric(scale(comm_biomass, center = TRUE, scale = TRUE)),
              observed_sr = as.numeric(scale(observed_sr, center = TRUE, scale = TRUE)))
     
-    z <- broom::tidy(lm(comm_biomass ~ observed_sr, data = y))
+    lmx <- lm(comm_biomass ~ observed_sr, data = y)
+    
+    z <- broom::tidy(lmx)
     
     z <-
       z %>%
+      dplyr::mutate(r2 = summary(lmx)$r.squared) %>%
       dplyr::mutate(observed_sr_min = min(x$observed_sr),
              observed_sr_max = max(x$observed_sr)) %>%
       dplyr::mutate(observed_sr_range = (observed_sr_max - observed_sr_min) )
@@ -199,16 +196,30 @@ for (s in c(1:nrow(perm_grid)) ) {
   
 }
 
+# bind this output into a dataframe
 ran_est_out <- 
   bind_rows(est_out, .id = "sowndiv_comb")
+nrow(ran_est_out)
 
-names(ran_est_out)
+# remove duplicate rows
+ran_est_out <- 
+  distinct(ran_est_out)
+nrow(ran_est_out)
 
-ran_est_out %>%
-  filter(term == "observed_sr", observed_sr_range > 1) %>%
-  ggplot(data = .,
-         mapping = aes(x = sowndiv_range, y = estimate)) +
-  geom_point()
+# get only the species richness slope and remove any where realised diversity range was below 1
+est_all <- 
+  ran_est_out %>%
+  filter(term == "observed_sr", observed_sr_range > 1)
+
+ggplot(data = est_all,
+       mapping = aes(x = estimate)) +
+  geom_histogram(alpha = 0.3, colour = "black") +
+  geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1.25) +
+  ylab("count") +
+  xlab("realised diversity-function estimate") +
+  theme_meta()
+
+
 
 
 
