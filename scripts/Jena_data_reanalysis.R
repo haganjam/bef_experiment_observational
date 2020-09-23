@@ -20,7 +20,7 @@ if(! dir.exists(here("figures"))){
 
 # where to access functions from
 source(here("scripts/function_plotting_theme.R"))
-
+source(here("scripts/realised_div_slope_function.R"))
 
 # load the Jena biomass data
 jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
@@ -138,80 +138,17 @@ ggplot(data = filter(site_bio, time == max(time)),
 ran_bio <- 
   filter(site_bio, time == max(time))
 
-perm_grid <- 
-  expand.grid(sort(unique(ran_bio$sowndiv)), 
-              sort(unique(ran_bio$sowndiv), decreasing = TRUE) )
+# rename the variables to match with the function: slope_est_func
+ran_bio <- 
+  rename(ran_bio,
+         community_biomass = comm_biomass,
+         realised_richness = observed_sr,
+         species_pool = sowndiv)
 
-perm_grid <- 
-  perm_grid %>%
-  filter(Var1 <= Var2)
+# use the function to get the realised-diversity function slopes
+mod_out <- slope_est_func(data = df, reps = 5, plots = 12)
 
-# set the number of replicates
-reps <- 30
-
-# set the number of plots
-plots <- 12
-
-est_out <- vector("list", length = nrow(perm_grid))
-
-for (s in c(1:nrow(perm_grid)) ) {
-  
-  x <- 
-    ran_bio %>%
-    filter(sowndiv >= perm_grid$Var1[s],
-           sowndiv <= perm_grid$Var2[s])
-  
-  
-  rep_out <- vector("list", length = reps)
-  
-  for (i in c(1:reps) ) {
-    
-    y <- x[sample(1:nrow(x), size = plots), ]
-    
-    y <- 
-      y %>%
-      mutate(comm_biomass = as.numeric(scale(comm_biomass, center = TRUE, scale = TRUE)),
-             observed_sr = as.numeric(scale(observed_sr, center = TRUE, scale = TRUE)))
-    
-    lmx <- lm(comm_biomass ~ observed_sr, data = y)
-    
-    z <- broom::tidy(lmx)
-    
-    z <-
-      z %>%
-      dplyr::mutate(r2 = summary(lmx)$r.squared) %>%
-      dplyr::mutate(observed_sr_min = min(x$observed_sr),
-             observed_sr_max = max(x$observed_sr)) %>%
-      dplyr::mutate(observed_sr_range = (observed_sr_max - observed_sr_min) )
-    
-    rep_out[[i]] <- z
-    
-  }
-  
-  est_out[[s]] <- 
-    dplyr::bind_rows(rep_out, .id = "rep") %>%
-    dplyr::mutate(sowndiv_low = perm_grid$Var1[s],
-                  sowndiv_upp = perm_grid$Var2[s]) %>%
-    dplyr::mutate(sowndiv_range = (sowndiv_upp - sowndiv_low) )
-  
-}
-
-# bind this output into a dataframe
-ran_est_out <- 
-  bind_rows(est_out, .id = "sowndiv_comb")
-nrow(ran_est_out)
-
-# remove duplicate rows
-ran_est_out <- 
-  distinct(ran_est_out)
-nrow(ran_est_out)
-
-# get only the species richness slope and remove any where realised diversity range was below 1
-est_all <- 
-  ran_est_out %>%
-  filter(term == "observed_sr", observed_sr_range > 1)
-
-ggplot(data = est_all,
+ggplot(data = mod_out,
        mapping = aes(x = estimate)) +
   geom_histogram(alpha = 0.3, colour = "black") +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1.25) +
