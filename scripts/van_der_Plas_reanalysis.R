@@ -32,18 +32,6 @@ source(here("scripts/function_plotting_theme.R"))
 # read in the completed data file
 spat_comp <- read_delim(here("data/van_der_Plas_2019_spatial_extent_complete.csv"), delim = ",")
 
-# check if all relationship numbers were evaluated
-unique(spat_comp$Relationship_nr) %>%
-  length()
-
-tibble(x = sort(unique(spat_comp$Relationship_nr)),
-       y = sort(unique(vand_dat_c$Relationship_nr))) %>%
-  mutate(id = if_else(x == y, 0, 1)) %>%
-  pull(id) %>%
-  sum(.)
-
-# all relationship numbers were evaluated
-
 
 ### figure 2a
 
@@ -117,20 +105,21 @@ fig_2a_obs <-
 fig_2a <- 
   ggplot() +
   geom_violin(data = fig_2a_ran,
-              mapping = aes(x = bef_relationship, y = proportion, fill = bef_relationship),
-              alpha = 1, bw = 0.005, position = position_dodge(width=0.3)) +
+              mapping = aes(x = bef_relationship, y = proportion),
+              alpha = 0.5, bw = 0.005, position = position_dodge(width=0.3),
+              fill = "grey") +
   geom_point(data = fig_2a_obs,
              mapping = aes(x = bef_relationship, y = proportion),
              colour = "black", size = 4.5, shape = 21, fill = "white") +
   geom_text(data = fig_2a_obs,
             mapping = aes(x = bef_relationship, y = proportion, label = direction), 
             position = position_dodge(width = 0.3)) +
-  scale_fill_viridis_d() +
   scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
   ylab("proportion of slopes") +
   xlab(NULL) +
   theme_meta() +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.text.x = element_text(size = 12))
 
 fig_2a
 

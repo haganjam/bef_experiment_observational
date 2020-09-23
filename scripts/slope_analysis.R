@@ -65,14 +65,18 @@ for (i in 1:length(data_col)) {
   
 }
 
-# set up the x and y labels
+# set up the x and y labels for the raw slope plots
 ylab1 <- c("count")
 xlab1 <- c("realised diversity-function est.")
+
+# set up the x and y labels for slope plots vs. the species pool
+ylab2 <- c("realised diversity-function est.")
+xlab2 <- c("species pool diversity range")
 
 # plot the model slopes 
 mod_slopes <- bind_rows(est_col[1:4], .id = "model run")
 
-fig_a <- 
+f1 <- 
   ggplot(data = mod_slopes,
        mapping = aes(x = estimate, fill = `model run`) ) +
   geom_histogram(alpha = 0.5) +
@@ -81,7 +85,21 @@ fig_a <-
   ylab(ylab1) +
   xlab(xlab1) +
   theme_meta() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "none")
+
+ 
+f2 <- 
+  ggplot(data = mod_slopes,
+         mapping = aes(x = sp_range, y = estimate, colour = `model run`) ) +
+  geom_jitter(width = 1, alpha = 0.25) +
+  geom_smooth(method = "lm", size = 0.75, se = FALSE) +
+  geom_hline(yintercept = 0, colour = "red", linetype = "dashed", size = 1) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  ylab(ylab2) +
+  xlab(xlab2) +
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank())
 
 
 # do the same for the experimental data
@@ -93,7 +111,7 @@ exp_slopes <-
 levs <- c("Jena", "Bayreuth", "Sheffield", "Umea")
 levels(exp_slopes$experiment) <- levs
 
-fig_b <- 
+f3 <- 
   ggplot(data = exp_slopes,
        mapping = aes(x = estimate, fill = experiment) ) +
   geom_histogram(alpha = 0.5) +
@@ -102,12 +120,32 @@ fig_b <-
   ylab(ylab1) +
   xlab(xlab1) +
   theme_meta() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "none")
 
-ggarrange(fig_a, fig_b,
-          labels = c("a", "b"),
-          font.label = list(size = 12, color = "black", face = "plain", family = NULL),
-          ncol = 1)
+f4 <- 
+  ggplot(data = exp_slopes,
+       mapping = aes(x = sp_range, y = estimate, colour = experiment) ) +
+  geom_jitter(width = 0.25, alpha = 0.6) +
+  geom_smooth(method = "lm", size = 0.75, se = FALSE) +
+  geom_hline(yintercept = 0, colour = "red", linetype = "dashed", size = 1) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  ylab(ylab2) +
+  xlab(xlab2) +
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank())
+
+
+f_comb <- 
+  ggarrange(f1, f3, f2, f4, ncol = 2, nrow = 2,
+            labels = c("a", "b", "c", "d"),
+            font.label = list(size = 12, color = "black", face = "plain", family = NULL),
+            heights = c(1, 1.25, 1, 1.25))
+
+ggsave(filename = here("figures/fig_2.png"), 
+       plot = f_comb, width = 19, height = 19, units = "cm",
+       dpi = 450)
+
 
 
 
