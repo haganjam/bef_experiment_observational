@@ -122,7 +122,9 @@ ran_bio <-
          realised_richness = observed_sr,
          species_pool = sowndiv)
 
-# output this as a .csv file
+# output this ran_bio dataframe as a .csv file
+write_csv(x = ran_bio,
+          path = here("data/jena_analysis_data.csv"))
 
 
 # Box 1 test analysis
@@ -147,7 +149,7 @@ ggplot(data = filter(site_bio, time == max(time)),
 
 
 # test the function to get the realised-diversity function slopes
-mod_out <- slope_est_func(data = df, reps = 5, plots = 12)
+mod_out <- slope_est_func(data = ran_bio, reps = 5, plots = 12)
 
 ggplot(data = mod_out,
        mapping = aes(x = estimate)) +
