@@ -127,27 +127,6 @@ write_csv(x = ran_bio,
           path = here("data/jena_analysis_data.csv"))
 
 
-# Box 1 test analysis
-ggplot(data = filter(site_bio, time == max(time)),
-       mapping = aes(x = sowndiv, y = comm_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_bw()
-
-ggplot(data = filter(site_bio, time == max(time)),
-       mapping = aes(x = observed_sr, y = comm_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_bw()
-
-ggplot(data = filter(site_bio, time == max(time)),
-       mapping = aes(x = observed_sr, y = comm_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  facet_wrap(~as.character(sowndiv), scales = "free") +
-  theme_bw()
-
-
 # test the function to get the realised-diversity function slopes
 mod_out <- slope_est_func(data = ran_bio, reps = 5, plots = 12)
 

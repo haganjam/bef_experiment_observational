@@ -22,13 +22,13 @@ source(here("scripts/stachova_leps_model.R"))
 
 # run the model to generate sample data
 sl_mod_out <- 
-  s_l_2010_mod(reg_pool = 60,
+  s_l_2010_mod(reg_pool = 100,
                t_steps = 1000, 
                n0 = 3,
                a_mean = 0.8, a_sd = 0.2, a_min = 0.2, a_max = 1.2, a_spp = 1,
                k_min = 3, k_max = 150,
                r_min = 0.01, r_max = 0.5, 
-               lsp = c(2, 4, 8, 16),
+               lsp = c(10, 20, 30, 40, 50, 60),
                reps = 16)
 
 # get the final time point in the model
@@ -36,25 +36,10 @@ sl_mod_an <-
   sl_mod_out %>%
   filter(time == last(time))
 
-# Box 1 analysis
-ggplot(data = sl_mod_an,
-       mapping = aes(x = species_pool, y = community_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_bw()
+# output this into dataframe as a .csv file
+write_csv(x = sl_mod_an,
+          path = here("data/stachova_leps_model_data.csv"))
 
-ggplot(data = sl_mod_an,
-       mapping = aes(x = realised_richness, y = community_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_bw()
-
-ggplot(data = sl_mod_an,
-       mapping = aes(x = realised_richness, y = community_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  facet_wrap(~as.character(species_pool), scales = "free") +
-  theme_bw()
 
 
 
