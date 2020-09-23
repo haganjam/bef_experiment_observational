@@ -117,7 +117,7 @@ bio_d_list <- split(bio_d, bio_d$location)
 
 for (i in 1:length(bio_d_list) ) {
   
-  write_csv(x = ran_bio,
+  write_csv(x = bio_d_list[[i]],
             path = here(paste0("data/", paste0("biodepth_analysis_data_", i, ".csv"))) )
   
 }

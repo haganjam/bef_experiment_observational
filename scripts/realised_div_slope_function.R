@@ -46,18 +46,26 @@ slope_est_func <- function(data, reps = 30, plots = 12) {
         dplyr::mutate(community_biomass = as.numeric(scale(community_biomass, center = TRUE, scale = TRUE)),
                       realised_richness = as.numeric(scale(realised_richness, center = TRUE, scale = TRUE)))
       
-      lmx <- lm(community_biomass ~ realised_richness, data = y)
-      
-      z <- broom::tidy(lmx)
-      
-      z <-
-        z %>%
-        dplyr::mutate(r2 = summary(lmx)$r.squared) %>%
-        dplyr::mutate(realised_richness_min = min(x$realised_richness),
-                      realised_richness_max = max(x$realised_richness)) %>%
-        dplyr::mutate(realised_richness_range = (realised_richness_max - realised_richness_min) )
-      
-      rep_out[[i]] <- z
+      if (any(is.na(y$realised_richness), na.rm = FALSE) == TRUE) {
+        
+        lmx <- lm(1 ~ 1)
+        
+      } else {
+        
+        lmx <- lm(community_biomass ~ realised_richness, data = y, singular.ok = TRUE)
+        
+        z <- broom::tidy(lmx)
+        
+        z <-
+          z %>%
+          dplyr::mutate(r2 = summary(lmx)$r.squared) %>%
+          dplyr::mutate(realised_richness_min = min(x$realised_richness),
+                        realised_richness_max = max(x$realised_richness)) %>%
+          dplyr::mutate(realised_richness_range = (realised_richness_max - realised_richness_min) )
+        
+        rep_out[[i]] <- z
+        
+      }
       
     }
     
@@ -76,6 +84,10 @@ slope_est_func <- function(data, reps = 30, plots = 12) {
   # remove duplicate rows
   ran_est_out <- 
     dplyr::distinct(ran_est_out)
+  
+  # remove NA models
+  ran_est_out <- 
+    filter(ran_est_out, !is.na(std.error))
   
   # get only the species richness slope and remove any where realised diversity range was below 1
   est_all <- 
