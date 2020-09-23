@@ -8,7 +8,6 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(broom)
 library(viridis)
 library(here)
 library(vegan)
@@ -112,8 +111,21 @@ site_bio <-
   site_bio %>%
   filter(sowndiv > 1, sowndiv < 60)
 
+# random sampling of data at final time-point
+ran_bio <- 
+  filter(site_bio, time == max(time))
 
-# Box 1 analysis
+# rename the variables to match with the function: slope_est_func
+ran_bio <- 
+  rename(ran_bio,
+         community_biomass = comm_biomass,
+         realised_richness = observed_sr,
+         species_pool = sowndiv)
+
+# output this as a .csv file
+
+
+# Box 1 test analysis
 ggplot(data = filter(site_bio, time == max(time)),
        mapping = aes(x = sowndiv, y = comm_biomass)) +
   geom_point() +
@@ -134,18 +146,7 @@ ggplot(data = filter(site_bio, time == max(time)),
   theme_bw()
 
 
-# Random sampling of data at final time-point
-ran_bio <- 
-  filter(site_bio, time == max(time))
-
-# rename the variables to match with the function: slope_est_func
-ran_bio <- 
-  rename(ran_bio,
-         community_biomass = comm_biomass,
-         realised_richness = observed_sr,
-         species_pool = sowndiv)
-
-# use the function to get the realised-diversity function slopes
+# test the function to get the realised-diversity function slopes
 mod_out <- slope_est_func(data = df, reps = 5, plots = 12)
 
 ggplot(data = mod_out,

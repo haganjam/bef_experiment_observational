@@ -2,8 +2,8 @@
 # customised plotting theme
 theme_meta <- 
   function(base_size = 12, base_family = "") {
-    theme(panel.background =  element_rect(fill = "white"), 
-          panel.border =      element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
+    theme(panel.background = element_rect(fill = "white"), 
+          panel.border = element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
           axis.line.x = element_line(color="black", size = 0.2),
           axis.line.y = element_line(color="black", size = 0.2),
           panel.grid.major =  element_blank(),

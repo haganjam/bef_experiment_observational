@@ -15,25 +15,8 @@ library(vegan)
 library(ggpubr)
 library(truncnorm)
 
-# create customised plotting theme
-theme_meta <- function(base_size = 12, base_family = "") {
-  theme(panel.background =  element_rect(fill = "white"), 
-        panel.border =      element_rect(fill="NA", color="black", size=0.75, linetype="solid"),
-        axis.line.x = element_line(color="black", size = 0.2),
-        axis.line.y = element_line(color="black", size = 0.2),
-        panel.grid.major =  element_blank(),
-        panel.grid.minor =  element_blank(),
-        axis.ticks.length = unit(-0.16, "cm"),
-        axis.title.x = element_text(colour ="black", size = 12, face = "plain", margin=margin(5,0,0,0,"pt")),
-        axis.title.y = element_text(colour = "black", size = 12, face = "plain", margin=margin(0,5,0,0,"pt")),
-        axis.text.x = element_text(colour = "black", size=12, face = "plain",  margin=margin(10,0,0,0,"pt")),
-        axis.text.y = element_text(colour ="black", size=12, face = "plain", margin=margin(0,10,0,0,"pt")),
-        axis.ticks.x = element_line(colour = "black", size = 0.4),
-        axis.ticks.y = element_line(colour = "black", size = 0.4))
-}
 
-
-### code the Stachova and Leps (2010) simulation model (function = s_l_2010_mod)
+# code the Stachova and Leps (2010) simulation model (function = s_l_2010_mod)
 
 # explanation of the default values for the model parameters
 
@@ -78,6 +61,22 @@ s_l_2010_mod <- function(reg_pool = 100,
                          r_min = 0.01, r_max = 0.5, 
                          lsp = c(10, 20, 30, 40, 50, 60),
                          reps = 10) {
+  
+  if(! "dplyr" %in% installed.packages()[,1]) stop(
+    "this function requires vegan to be installed"
+  )
+  
+  if(! "tidyr" %in% installed.packages()[,1]) stop(
+    "this function requires vegan to be installed"
+  )
+  
+  if(! "gtools" %in% installed.packages()[,1]) stop(
+    "this function requires vegan to be installed"
+  )
+  
+  if(! "truncnorm" %in% installed.packages()[,1]) stop(
+    "this function requires vegan to be installed"
+  )
   
   # set up the permutations between species for the competition coefficients
   al <- as.data.frame(gtools::permutations(n = reg_pool, r = 2, v = c(1:reg_pool), repeats.allowed = TRUE))
@@ -208,6 +207,7 @@ s_l_2010_mod(reg_pool = 100,
              r_min = 0.01, r_max = 0.5, 
              lsp = c(10, 20, 30, 40, 50, 60),
              reps = 10)
+
 
 
 # run this function for a reduced set of time points and parameters
