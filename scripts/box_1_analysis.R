@@ -103,7 +103,8 @@ fig1cd <-
 fig1 <- ggarrange(fig1ab, fig1cd, ncol = 1, nrow = 2, labels = NULL,
                   heights = c(1, 1.25))
 
-ggsave(here("figures/box1_fig1.png"), width = 19, height = 19, units = "cm",
+ggsave(filename = here("figures/box1_fig1.png"), 
+       plot = fig1, width = 19, height = 19, units = "cm",
        dpi = 450)
 
 
