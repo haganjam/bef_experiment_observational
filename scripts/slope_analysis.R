@@ -105,15 +105,15 @@ f2 <-
 # do the same for the experimental data
 exp_slopes <- 
   bind_rows(est_col[5:8], .id = "experiment") %>%
-  mutate(experiment = as.factor(experiment))
+  mutate(exp. = as.factor(experiment))
 
 # change the levels of the factor
-levs <- c("Jena", "Bayreuth", "Sheffield", "Umea")
-levels(exp_slopes$experiment) <- levs
+levs <- c("Jena", "Bayr.", "Shef.", "Umea")
+levels(exp_slopes$exp.) <- levs
 
 f3 <- 
   ggplot(data = exp_slopes,
-       mapping = aes(x = estimate, fill = experiment) ) +
+       mapping = aes(x = estimate, fill = exp.) ) +
   geom_histogram(alpha = 0.5) +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
   scale_fill_viridis_d(option = "C", end = 0.9) +
@@ -124,7 +124,7 @@ f3 <-
 
 f4 <- 
   ggplot(data = exp_slopes,
-       mapping = aes(x = sp_range, y = estimate, colour = experiment) ) +
+       mapping = aes(x = sp_range, y = estimate, colour = exp.) ) +
   geom_jitter(width = 0.25, alpha = 0.6) +
   geom_smooth(method = "lm", size = 0.75, se = FALSE) +
   geom_hline(yintercept = 0, colour = "red", linetype = "dashed", size = 1) +

@@ -102,26 +102,34 @@ fig_2a_obs <-
   summarise(n = n(), .groups = "drop") %>%
   mutate(proportion = n/sum(n, na.rm = TRUE))
 
-fig_2a <- 
-  ggplot() +
-  geom_violin(data = fig_2a_ran,
-              mapping = aes(x = bef_relationship, y = proportion),
-              alpha = 0.5, bw = 0.005, position = position_dodge(width=0.3),
-              fill = "grey") +
-  geom_point(data = fig_2a_obs,
-             mapping = aes(x = bef_relationship, y = proportion),
-             colour = "black", size = 4.5, shape = 21, fill = "white") +
-  geom_text(data = fig_2a_obs,
-            mapping = aes(x = bef_relationship, y = proportion, label = direction), 
-            position = position_dodge(width = 0.3)) +
+ran_range <- 
+  fig_2a_ran %>%
+  group_by(bef_relationship, direction) %>%
+  summarise(min_prop = min(proportion),
+            max_prop = max(proportion), .groups = "drop")
+
+# bind the range information to the observed data
+sim_dat <- 
+  full_join(fig_2a_obs,
+            select(ran_range, bef_relationship, min_prop, max_prop),
+            by = "bef_relationship")
+  
+d1 <- 
+  ggplot(data = sim_dat,
+         mapping = aes(x = bef_relationship, y = proportion, fill = bef_relationship)) +
+  geom_bar(stat = "identity", width = 0.2, colour = "black") +
+  geom_errorbar(mapping = aes(ymin = min_prop,
+                              ymax = max_prop),
+                width = 0.1) +
   scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
+  scale_fill_viridis_d(option = "C", end = 0.9) +
   ylab("proportion of slopes") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none",
         axis.text.x = element_text(size = 12))
 
-fig_2a
+d1
 
 
 ### figure 2b
@@ -221,8 +229,9 @@ fig_s2 <-
   xlab("ln - longitude range (DD)") +
   theme_meta()
 
-ggsave(filename = here("figures/fig_s2.png"), plot = fig_s2, dpi = 500,
+ggsave(filename = here("figures/fig_s2.png"), plot = fig_s2, dpi = 450,
        width = 11, height = 7, units = "cm")
+
 
 
 # continue with plotting of figure 2b
@@ -284,40 +293,48 @@ for (i in seq_along(1:r) ) {
 fig_2b_ran <- 
   bind_rows(fig_2b_ran, .id = "run")
 
-fig_2b_ran$slope_proportion %>%
-  range()
+# examine the observed data
+
+fig_2b_obs
+
+range_spat <- 
+  fig_2b_ran %>%
+  group_by(spatial_extent, relationship) %>%
+  summarise(min_slope_proportion = min(slope_proportion),
+            max_slope_proportion = max(slope_proportion),
+            .groups = "drop")
+
+sim_dat_spat <- 
+  full_join(fig_2b_obs,
+            select(range_spat, spatial_extent, relationship,
+                   min_slope_proportion, max_slope_proportion),
+            by = c("spatial_extent", "relationship"))
 
 
-fig_2b <- 
-  ggplot() +
-  geom_violin(data = fig_2b_ran,
-              mapping = aes(x = spatial_extent, y = slope_proportion, fill = relationship), 
-              alpha = 1, bw = 0.025, position = position_dodge(width=0.3)) +
-  geom_point(data = fig_2b_obs,
-             mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship),
-             position = position_dodge(width = 0.3),
-             size = 4.5, shape = 21, colour = "black", fill = "white") +
-  geom_text(data = fig_2b_obs,
-            mapping = aes(x = spatial_extent, y = slope_proportion, group = relationship, label = direction), 
-            position = position_dodge(width = 0.3)) +
-  scale_fill_viridis_d() +
+d2 <- 
+  ggplot(data = sim_dat_spat,
+       mapping = aes(x = spatial_extent, y = slope_proportion, fill = direction)) +
+  geom_bar(stat = "identity", width = 0.4, colour = "black",
+           position=position_dodge(0.5)) +
+  geom_errorbar(mapping = aes(ymin = min_slope_proportion,
+                              ymax = max_slope_proportion),
+                width = 0.2,
+                position=position_dodge(0.5)) +
   scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
-  ylab("") +
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  ylab("proportion of slopes") +
   xlab(NULL) +
   theme_meta() +
-  theme(legend.position = "none")
+  theme(legend.position = "right",
+        axis.text.x = element_text(size = 12))
 
-fig_2b
+d_col <- 
+  ggarrange(d1, d2,
+          ncol = 2, nrow = 1,
+          labels = c("a", "b"),
+          font.label = list(size = 12, color = "black", face = "plain", family = NULL),
+          widths = c(1, 1.8))
 
 
-# export figure 2
-
-fig_2 <- 
-  ggarrange(fig_2a, fig_2b, labels = c("(a)", "(b)"),
-            font.label = list(size = 10, color = "black", face = "plain", family = NULL),
-            widths = c(1, 1.7) )
-
-fig_2
-
-ggsave(filename = here("figures/fig_2.png"), plot = fig_2, dpi = 500,
-       width = 16, height = 7, units = "cm")
+ggsave(filename = here("figures/fig_3.png"), plot = d_col, dpi = 450,
+       width = 19, height = 9, units = "cm")

@@ -15,7 +15,7 @@ theme_meta <-
           axis.text.y = element_text(colour ="black", size=11, face = "plain", margin=margin(0,10,0,0,"pt")),
           axis.ticks.x = element_line(colour = "black", size = 0.4),
           axis.ticks.y = element_line(colour = "black", size = 0.4),
-          legend.text = element_text(colour = "black", size=11, face = "plain"),
-          legend.title = element_text(colour = "black", size=12, face = "plain"))
+          legend.text = element_text(colour = "black", size=10, face = "plain"),
+          legend.title = element_text(colour = "black", size=10, face = "plain"))
   }
 
