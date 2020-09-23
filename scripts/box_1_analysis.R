@@ -23,6 +23,11 @@ source(here("scripts/realised_div_slope_function.R"))
 # load the model data
 mod_dat <- read_delim(here("data/stachova_leps_model_data.csv"), delim = ",")
 
+# subset out the first run
+mod_dat <- 
+  mod_dat %>%
+  filter(run == first(run))
+
 mod_dat <- 
   mod_dat %>%
   filter(species_pool %in% c(10, 20, 30, 40))
