@@ -127,7 +127,9 @@ d1 <-
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none",
-        axis.text.x = element_text(size = 12))
+        axis.text.x = element_text(size = 11),
+        axis.text.y = element_text(size = 10),
+        axis.title.y = element_text(size = 11))
 
 d1
 
@@ -326,7 +328,9 @@ d2 <-
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "right",
-        axis.text.x = element_text(size = 12))
+        axis.text.x = element_text(size = 11),
+        axis.text.y = element_text(size = 10),
+        axis.title.y = element_text(size = 11))
 
 d_col <- 
   ggarrange(d1, d2,
@@ -337,4 +341,4 @@ d_col <-
 
 
 ggsave(filename = here("figures/fig_3.png"), plot = d_col, dpi = 450,
-       width = 19, height = 9, units = "cm")
+       width = 19, height = 7, units = "cm")
