@@ -20,6 +20,10 @@ kelp_adat <- read_delim(file = here("data/kelp_analysis_data.csv"), delim = ",")
 # examine the data
 head(kelp_adat)
 
+# examine replication etc.
+length(unique(kelp_adat$YEAR))
+length(unique(kelp_adat$SITE))
+
 # calculate alpha diversity and community biomass for each site-year combination
 kelp_alpha <- 
   kelp_adat %>%
