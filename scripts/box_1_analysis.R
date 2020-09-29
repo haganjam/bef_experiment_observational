@@ -137,6 +137,7 @@ ggsave(filename = here("figures/box1_fig1.png"),
        dpi = 450)
 
 
+
 # do this for the BIODEPTH data as well to show that it is consistent
 
 # load in the biodepth data
@@ -157,7 +158,7 @@ data_bio <-
 # bind this into a single dataframe
 data_bio <- bind_rows(data_bio, .id = "exp.")
 
-# plot the realised diversity function relationship for each model
+# plot the realised diversity function relationship for each experiment in BIODEPTH
 bio_names <- 
   c("Germany", "Portugal", "Switzerland", "Greece",
     "Ireland", "Sweden", "Sheffield", "Silwood")
