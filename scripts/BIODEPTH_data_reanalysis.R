@@ -91,6 +91,12 @@ bio_d <-
   bio_d %>%
   filter(species.observed > 0 | biomass > 0)
 
+# remove the monoculture data
+bio_d <- 
+  bio_d %>%
+  filter(species.richness > 1)
+
+
 ggplot(data = bio_d,
        mapping = aes(x = species.richness, y = biomass)) +
   geom_jitter(width = 0.5) +
@@ -104,7 +110,6 @@ ggplot(data = bio_d,
   geom_smooth(method = "lm") +
   facet_wrap(~location, scales = "free") +
   theme_meta()
-
 
 # rename the variables to match with the function
 bio_d <- 

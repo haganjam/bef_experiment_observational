@@ -106,10 +106,10 @@ site_bio <-
          observed_sr = rowSums(decostand(sp_bio, method = "pa")) )
 
 
-# remove the 60 species treatment as it is a positive control
+# remove the 60 species treatment as it is a positive control along with the monocultulres
 site_bio <- 
   site_bio %>%
-  filter(sowndiv < 60)
+  filter(sowndiv > 1, sowndiv < 60)
 
 # take the final time-point
 site_bio <- 

@@ -83,7 +83,7 @@ lapply(data_col, function(x) {
 est_col <- vector("list", length = length(data_col))
 for (i in 1:length(data_col)) {
   
-  est_col[[i]] <- slope_est_func(data = data_col[[i]], reps = 100, plots = 0.66 )
+  est_col[[i]] <- slope_est_func(data = data_col[[i]], reps = 200, plots = 0.75)
   
 }
 
@@ -112,6 +112,27 @@ ggplot(data = exp_slopes,
   theme_meta() +
   theme(legend.position = "bottom",
         legend.key = element_blank())
+
+exp_slopes %>%
+  group_by(experiment, spp_pool) %>%
+  summarise(rr = mean(realised_richness_range),
+            sp_pool = mean(sp_range))
+
+
+
+# plot the relationship between species pool range and slope
+ggplot(data = exp_slopes,
+       mapping = aes(x = sp_range, y = estimate, colour = exp.) ) +
+  geom_jitter(width = 0.5, alpha = 0.1) +
+  geom_smooth(se = FALSE, method = "lm", size = 0.75) +
+  geom_hline(yintercept = 0, colour = "red", linetype = "dashed", size = 1) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  # ylab(ylab2) +
+  # xlab(xlab2) +
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank())
+
 
 # f_comb <- 
   # ggarrange(f1, f2, ncol = 1, nrow = 2,
