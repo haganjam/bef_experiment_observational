@@ -28,7 +28,7 @@ n_exp <- 9
 
 # set up the means for the model runs
 set.seed(4897245)
-a_mean_sim <- runif(n = n_exp, min = 0.6, max = 1)
+a_mean_sim <- runif(n = n_exp, min = 0.25, max = 1)
 
 sl_mod_out <- vector("list", length = n_exp)
 for (i in (1:n_exp) ) {
