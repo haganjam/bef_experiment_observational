@@ -66,7 +66,7 @@ mod_dat_t_l <- split(select(mod_dat_t, -model), mod_dat_t$model )
 est_mod <- vector("list", length = length(mod_names))
 for (i in 1:length(data_col)) {
   
-  est_mod[[i]] <- slope_est_func(data = mod_dat_t_l[[i]], reps = 100, plots = 0.25 )
+  est_mod[[i]] <- slope_est_func(data = mod_dat_t_l[[i]], reps = 100, plots = 0.66 )
   
 }
 
