@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Sample slopes from the model output, Jena data and relevant BIODEPTH sites
+# Title: Sample slopes from Jena data and relevant BIODEPTH sites
 
 # load relevant libraries
 library(readr)
