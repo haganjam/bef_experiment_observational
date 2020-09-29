@@ -19,7 +19,6 @@ if(! dir.exists(here("figures"))){
 
 # where to access functions from
 source(here("scripts/function_plotting_theme.R"))
-source(here("scripts/realised_div_slope_function.R"))
 
 # load the Jena biomass data
 jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
@@ -115,6 +114,11 @@ site_bio <-
 # take the final time-point
 site_bio <- 
   filter(site_bio, time == max(time))
+
+# remove one sample with zero biomass and zero observed species richness
+site_bio <- 
+  site_bio %>%
+  filter( !(observed_sr == 0) )
 
 # rename the variables to match with the function: slope_est_func
 site_bio <- 

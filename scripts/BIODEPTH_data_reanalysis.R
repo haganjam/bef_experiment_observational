@@ -19,7 +19,6 @@ if(! dir.exists(here("figures"))){
 
 # where to access functions from
 source(here("scripts/function_plotting_theme.R"))
-source(here("scripts/realised_div_slope_function.R"))
 
 # load the BIODEPTH observed species richness data
 bio_d_real <- read_tsv(here("data/Observed.Species.Richness.txt"))
@@ -61,8 +60,17 @@ bio_d %>%
 # check number of replicates for each treatment and location
 bio_d %>%
   group_by(location, species.richness) %>%
-  summarise(n = n()) %>%
-  View()
+  summarise(n = n())
+
+bio_d %>%
+  filter(location == 3) %>%
+  group_by(species.richness) %>%
+  summarise(n = n())
+
+# remove the highest diversity treatment for location 3 as it has low replication and is far from other treatments
+bio_d <- 
+  bio_d %>%
+  filter(!(location == 3 & species.richness > 30) )
 
 # check for missing values
 lapply(bio_d, function(x) { sum(ifelse(is.na(x), 1, 0)) })
@@ -74,6 +82,14 @@ bio_d %>%
 bio_d <- 
   bio_d %>%
   filter(!is.na(species.observed))
+
+# check for rows without any species.observed
+lapply(bio_d, function(x) { sum(ifelse(x == 0, 1, 0))   })
+
+# remove data points without biomass or any observed species
+bio_d <- 
+  bio_d %>%
+  filter(species.observed > 0 | biomass > 0)
 
 ggplot(data = bio_d,
        mapping = aes(x = species.richness, y = biomass)) +
@@ -107,7 +123,6 @@ for (i in 1:length(bio_d_list) ) {
             path = here(paste0("data/", paste0("biodepth_analysis_data_", i, ".csv"))) )
   
 }
-
 
 
 
