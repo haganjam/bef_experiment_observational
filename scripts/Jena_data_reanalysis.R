@@ -57,7 +57,7 @@ jena_bio <-
   jena_bio %>%
   filter_at(all_of(sp_names), all_vars(. >= 0 ) )
 
-# only take the first sub-sample
+# take the first three sub-samples as not all plots have four sub-samples
 unique(jena_bio$subsample)
 
 jena_bio <- 
@@ -106,37 +106,43 @@ site_bio <-
   mutate(comm_biomass = rowSums(sp_bio),
          observed_sr = rowSums(decostand(sp_bio, method = "pa")) )
 
-# remove the 60 species treatment and the monocultures as it is not really relevant
+
+# remove the 60 species treatment as it is a positive control
 site_bio <- 
   site_bio %>%
-  filter(sowndiv > 1, sowndiv < 60)
+  filter(sowndiv < 60)
 
-# random sampling of data at final time-point
-ran_bio <- 
+# take the final time-point
+site_bio <- 
   filter(site_bio, time == max(time))
 
 # rename the variables to match with the function: slope_est_func
-ran_bio <- 
-  rename(ran_bio,
+site_bio <- 
+  rename(site_bio,
          community_biomass = comm_biomass,
          realised_richness = observed_sr,
          species_pool = sowndiv)
 
+
+# plot species pool and community biomass
+ggplot(data = site_bio,
+       mapping = aes(x = species_pool, y = community_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_meta()
+  
+# plot realised diversity and community biomass
+ggplot(data = site_bio,
+       mapping = aes(x = realised_richness, y = community_biomass)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_meta()
+
 # output this ran_bio dataframe as a .csv file
-write_csv(x = ran_bio,
+write_csv(x = site_bio,
           path = here("data/jena_analysis_data.csv"))
 
 
-# test the function to get the realised-diversity function slopes
-mod_out <- slope_est_func(data = ran_bio, reps = 5, plots = 12)
-
-ggplot(data = mod_out,
-       mapping = aes(x = estimate)) +
-  geom_histogram(alpha = 0.3, colour = "black") +
-  geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1.25) +
-  ylab("count") +
-  xlab("realised diversity-function estimate") +
-  theme_meta()
 
 
 

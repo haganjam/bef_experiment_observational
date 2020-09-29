@@ -51,10 +51,6 @@ bio_d <-
   bio_d %>%
   filter(year == last(year))
 
-# out the data without the monocultures
-bio_d <- 
-  bio_d %>%
-  filter(species.richness > 1)
 
 # check species richness treatments
 bio_d %>%
@@ -68,41 +64,31 @@ bio_d %>%
   summarise(n = n()) %>%
   View()
 
-# select out relevant experiments:
-# 1. at least three species richness treatments with at least 8 replicates for that treatment
-# this allowed random draws of six plots whilst having at least 20 unique reps:
-# gtools::combinations(n = 8, r = 6)
+# check for missing values
+lapply(bio_d, function(x) { sum(ifelse(is.na(x), 1, 0)) })
 
+bio_d %>%
+  filter(is.na(species.richness) | is.na(species.observed))
+
+# remove these data points from location 2 with missing data
 bio_d <- 
   bio_d %>%
-  filter(location %in% c(1, 4, 3, 5, 7, 8)) %>%
-  filter( !(location == 1 & species.richness == 16),
-          !(location == 3 & species.richness == 32),
-          !(location == 5 & species.richness == 3),
-          !(location == 7 & species.richness == 12) )
+  filter(!is.na(species.observed))
 
 ggplot(data = bio_d,
        mapping = aes(x = species.richness, y = biomass)) +
-  geom_point() +
+  geom_jitter(width = 0.5) +
   geom_smooth(method = "lm") +
-  facet_wrap(~location, scales = "free")
+  facet_wrap(~location, scales = "free") +
+  theme_meta()
 
 ggplot(data = bio_d,
-       mapping = aes(x = species.observed, 
-                     y = biomass, 
-                     colour = as.character(species.richness)) ) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~ location, scales = "free")
+       mapping = aes(x = species.observed, y = biomass)) +
+  geom_jitter(width = 0.5) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~location, scales = "free") +
+  theme_meta()
 
-
-# only pick the experiments with a positive slope because:
-# we want to show that this effect comes out even when species pool richness does affect function
-
-# subset out locations 1, 3 and 7
-bio_d <- 
-  bio_d %>%
-  filter(location %in% c(1, 3, 7))
 
 # rename the variables to match with the function
 bio_d <- 
