@@ -51,9 +51,16 @@ xlab1 <- c("species pool diversity")
 # output a dataframe
 raw_exp_dat <- bind_rows(data_col, .id = "experiment")
 
+# rename the experiments and make it a factor
+site_names <- 
+  c("Jena", "Germany", "Portugal", "Switzerland", "Greece",
+  "Ireland", "Sweden", "Sheffield", "Silwood")
 
+raw_exp_dat$experiment <- as.factor(raw_exp_dat$experiment)
+levels(raw_exp_dat$experiment) <- site_names
 
-ggplot(data = .,
+# plot the relationship between species pool diversity and biomass
+ggplot(data = raw_exp_dat,
          mapping = aes(x = species_pool, y = community_biomass, colour = experiment) ) +
   geom_jitter(width = 0.25, alpha = 0.6) +
   geom_smooth(method = "lm", size = 0.75, se = FALSE) +
@@ -86,8 +93,10 @@ unlist(lapply(est_col, function(x) { min(x$n) }))
 
 # bind the function output into a dataframe
 exp_slopes <- 
-  bind_rows(est_col, .id = "experiment") %>%
-  mutate(exp. = as.factor(experiment))
+  bind_rows(est_col, .id = "experiment")
+
+exp_slopes$exp. <- as.factor(exp_slopes$experiment)
+levels(exp_slopes$exp.) <- site_names
 
 # set up the x and y labels for the raw slope plots
 ylab2 <- c("density")
@@ -95,24 +104,24 @@ xlab2 <- c("realised diversity-function est.")
 
 ggplot(data = exp_slopes,
        mapping = aes(x = estimate, fill = exp.) ) +
-  geom_density(alpha = 0.7, colour = "white") +
+  geom_density(alpha = 0.5, colour = "white") +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
   scale_fill_viridis_d(option = "C", end = 0.9) +
   ylab(ylab2) +
   xlab(xlab2) +
   theme_meta() +
-  theme(legend.position = "none",
+  theme(legend.position = "bottom",
         legend.key = element_blank())
 
-f_comb <- 
-  ggarrange(f1, f2, ncol = 1, nrow = 2,
-            labels = c("a", "b"),
-            font.label = list(size = 12, color = "black", face = "plain", family = NULL),
-            heights = c(1, 1.25, 1, 1.25))
+# f_comb <- 
+  # ggarrange(f1, f2, ncol = 1, nrow = 2,
+            # labels = c("a", "b"),
+            # font.label = list(size = 12, color = "black", face = "plain", family = NULL),
+            # heights = c(1, 1.25, 1, 1.25))
 
-ggsave(filename = here("figures/fig_2.png"), 
-       plot = f_comb, width = 19, height = 19, units = "cm",
-       dpi = 450)
+#ggsave(filename = here("figures/fig_2.png"), 
+       # plot = f_comb, width = 19, height = 19, units = "cm",
+       # dpi = 450)
 
 
 
