@@ -8,36 +8,36 @@
 # explanation of the default values for the model parameters
 
 # number of species in the regional species pool
-reg_pool = 100 
+# reg_pool = 100 
 
 # number of time-steps
-t_steps = 20
+# t_steps = 20
 
 # starting population size of each species
-n0 = 3
+# n0 = 3
 
 # parameters of the truncated normal distribution used for generating the competition coeffficients (alpha)
-a_mean = 1
-a_sd = 0.2
-a_min = 0.2
-a_max = 1.2
+# a_mean = 1
+# a_sd = 0.2
+# a_min = 0.2
+# a_max = 1.2
 
 # set the alpha value for the effect of each species on itself
-a_spp = 1
+# a_spp = 1
 
 # parameters of the uniform distribution used for generating the carrying capacities (K)
-k_min = 3
-k_max = 150
+# k_min = 3
+# k_max = 150
 
 # parameters of the uniform distribution used for generating the intrinsic growth rates (r)
-r_min = 0.01
-r_max = 0.5
+# r_min = 0.01
+# r_max = 0.5
 
-# set up a vector of local species pools (or species richness treatments)
-local_species_pools = c(10, 20, 30, 40, 50, 60)
+# set up a vector of local species pools (or species richness treatments): 
+# lsp = c(10, 20, 30, 40, 50, 60)
 
-# set the number of replicates of each local species pool
-reps = 10
+# set the number of replicates of each local species pool: 
+# reps = 10
 
 
 s_l_2010_mod <- function(reg_pool = 100,

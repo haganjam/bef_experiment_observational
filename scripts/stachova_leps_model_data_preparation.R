@@ -24,31 +24,30 @@ source(here("scripts/stachova_leps_model.R"))
 # run the model to generate the output data
 
 # set the number of runs to do
-n_exp <- 4
+n_exp <- 10
+
+# set up the means for the model runs
+set.seed(4897245)
+a_mean_sim <- runif(n = n_exp, min = 0.6, max = 1)
 
 sl_mod_out <- vector("list", length = n_exp)
 for (i in (1:n_exp) ) {
   
   sl_mod_out[[i]] <- 
-    s_l_2010_mod(reg_pool = 100,
-                 t_steps = 500, 
+    s_l_2010_mod(reg_pool = 50,
+                 t_steps = 4000, 
                  n0 = 3,
-                 a_mean = runif(n = 1, min = 0.6, max = 1), 
+                 a_mean = a_mean_sim[i], 
                  a_sd = 0.2, a_min = 0.2, a_max = 1.2, a_spp = 1,
                  k_min = 3, k_max = 150,
                  r_min = 0.01, r_max = 0.5, 
-                 lsp = c(10, 20, 30, 40, 50, 60),
-                 reps = 16)
+                 lsp = c(1, 2, 4, 8, 16, 24),
+                 reps = 50)
   
 }
 
 sl_mod_out <- 
   bind_rows(sl_mod_out, .id = "run")
-
-# get the final time point in the model
-sl_mod_an <- 
-  sl_mod_out %>%
-  filter(time == last(time))
 
 # output this into dataframe as a .csv file
 write_csv(x = sl_mod_an,
