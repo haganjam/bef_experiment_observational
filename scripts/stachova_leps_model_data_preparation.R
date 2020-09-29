@@ -24,7 +24,7 @@ source(here("scripts/stachova_leps_model.R"))
 # run the model to generate the output data
 
 # set the number of runs to do
-n_exp <- 10
+n_exp <- 9
 
 # set up the means for the model runs
 set.seed(4897245)
