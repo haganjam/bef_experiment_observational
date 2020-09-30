@@ -21,9 +21,9 @@ head(mod_time)
 # get rid of the monoculture data
 mod_ana <- 
   mod_time %>%
-  filter(species_pool > 2, species_pool < 16)
+  filter(species_pool > 1)
 
-mod_time$species_pool %>% unique()
+mod_ana$species_pool %>% unique()
 
 # provide a id column for each plot for each time point
 mod_ana <- 
@@ -37,11 +37,13 @@ maxid <- max(mod_ana$id)
 tp <- length(unique(mod_ana$time))
 ts <- 17
 
-t_samp <- sample(x = 1:tp, size = ts)
+set.seed(5467)
+t_samp <- sample(x = (1:tp), size = ts)
 
 # set up the sites to sample
 sites <- 9
 
+set.seed(54997)
 s_samp <- sample(x = 1:maxid, size = sites)
 
 # sample a specific set of time points and sites
@@ -64,6 +66,19 @@ mod_time_s %>%
   theme(legend.position = "none")
 
 
+mod_time_s %>%
+  group_by(run, id) %>%
+  summarise(species_pool = mean(species_pool, na.rm = TRUE),
+            community_biomass_m = mean(community_biomass, na.rm = TRUE),
+            community_biomass_se = sd(community_biomass, na.rm = TRUE)/sqrt(n()), .groups = "drop") %>%
+  ggplot(data = .,
+         mapping = aes(x = species_pool, y = community_biomass_m) ) +
+  geom_point(alpha = 0.75) +
+  geom_smooth(se = FALSE, method = "lm", size = 0.75) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  facet_wrap(~run, scales = "free") +
+  theme_meta() +
+  theme(legend.position = "none")
 
 
 
