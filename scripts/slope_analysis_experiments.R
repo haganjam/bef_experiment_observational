@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Sample slopes from Jena data and relevant BIODEPTH sites
+# Title: Sample slopes from Jena data and relevant BIODEPTH sites and from the model
 
 # load relevant libraries
 library(readr)
@@ -20,7 +20,15 @@ if(! dir.exists(here("figures"))){
 source(here("scripts/function_plotting_theme.R"))
 source(here("scripts/realised_div_slope_function.R"))
 
-# load in the biodiversity experiment data
+# set up axis labels
+l1 <- expression(paste("community biomass (g ",  " m"^"-2", ")") )
+l2 <- c("community biomass")
+l3 <- expression(paste(alpha, " species pool", " diversity"))
+l4 <- c("density")
+l5 <- expression(paste("realised ", alpha, " diversity-", "function", " est."))
+
+
+### biodiversity experiment data
 
 # load in the jena data
 jen1 <- read_delim(here("data/jena_analysis_data.csv"), delim = ",")
@@ -43,90 +51,274 @@ data_col <-
 
 unlist(lapply(data_col, function(x) { nrow(x) }))
 
-
-# set up axis labels
-ylab1 <- expression(paste("community biomass (g ",  " m"^"-2", ")") )
-xlab1 <- c("species pool diversity")
-
 # output a dataframe
 raw_exp_dat <- bind_rows(data_col, .id = "experiment")
 
-# rename the experiments and make it a factor
-site_names <- 
-  c("Jena", "Germany", "Portugal", "Switzerland", "Greece",
-  "Ireland", "Sweden", "Sheffield", "Silwood")
-
-raw_exp_dat$experiment <- as.factor(raw_exp_dat$experiment)
-levels(raw_exp_dat$experiment) <- site_names
-
-# plot the relationship between species pool diversity and biomass
-ggplot(data = raw_exp_dat,
-         mapping = aes(x = species_pool, y = community_biomass, colour = experiment) ) +
-  geom_jitter(width = 0.25, alpha = 0.6) +
-  geom_smooth(method = "lm", size = 0.75, se = FALSE) +
-  scale_colour_viridis_d(option = "C", end = 0.9) +
-  ylab(ylab1) +
-  xlab(xlab1) +
-  theme_meta() +
-  theme(legend.position = "none")
-
-lapply(data_col, function(x) { 
+neg_mods <- 
+  lapply(data_col, function(x) { 
   
   x <- lm(community_biomass ~ species_pool, data = x)
   
   broom::glance(x)
   
-  })
+}) %>%
+  bind_rows(., .id = "model") %>%
+  filter(p.value > 0.05) %>%
+  pull(model)
+
+raw_exp_dat <- 
+  raw_exp_dat %>%
+  mutate(pos_slopes = if_else(experiment %in% neg_mods, "neg", "pos"))
+
+# rename the experiments and make it a factor
+site_names <- 
+  c("Jena", "DEU", "PRT", "CHE", "GRC",
+    "IRL.", "SWE", "Shef.", "Silw.")
+
+raw_exp_dat$experiment <- as.factor(raw_exp_dat$experiment)
+levels(raw_exp_dat$experiment) <- site_names
+
+
+# plot the relationship between species pool diversity and biomass
+
+f1 <- 
+  lapply(split(raw_exp_dat, raw_exp_dat$pos_slopes),
+       function(x) {
+         
+         ggplot(data = x,
+                mapping = aes(x = species_pool, y = community_biomass, colour = experiment) ) +
+           geom_jitter(width = 0.25, alpha = 0.6) +
+           geom_smooth(method = "lm", size = 0.75, se = FALSE) +
+           scale_colour_viridis_d(option = "C", end = 0.9) +
+           ylab(l1) +
+           xlab(l3) +
+           theme_meta() +
+           theme(legend.position = "none")
+         
+       })
 
 
 # run the function on all the datasets
 est_col <- vector("list", length = length(data_col))
 for (i in 1:length(data_col)) {
   
-  est_col[[i]] <- slope_est_func(data = data_col[[i]], reps = 200, plots = 0.75)
+  est_col[[i]] <- slope_est_func(data = data_col[[i]], reps = 150, plots = 0.75)
   
 }
 
 # check how many data points are used in these analyses
 unlist(lapply(est_col, function(x) { min(x$n) }))
 
-
 # bind the function output into a dataframe
 exp_slopes <- 
   bind_rows(est_col, .id = "experiment")
 
+exp_slopes <- 
+  exp_slopes %>%
+  mutate(pos_slopes = if_else(experiment %in% neg_mods, "neg", "pos"))
+
 exp_slopes$exp. <- as.factor(exp_slopes$experiment)
 levels(exp_slopes$exp.) <- site_names
 
-# set up the x and y labels for the raw slope plots
-ylab2 <- c("density")
-xlab2 <- c("realised diversity-function est.")
+f2 <- 
+  lapply(split(exp_slopes, exp_slopes$pos_slopes),
+       function(x) {
+         
+         ggplot(data = x,
+                mapping = aes(x = estimate, fill = exp.) ) +
+           geom_density(alpha = 0.5, colour = "white") +
+           geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
+           scale_fill_viridis_d(option = "C", end = 0.9) +
+           scale_y_continuous(breaks = c(0.0, 0.5, 1.0, 1.5, 2, 2.5)) +
+           ylab(l4) +
+           xlab(l5) +
+           theme_meta() +
+           theme(legend.position = "none",
+                 legend.key = element_blank(),
+                 axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+                 axis.text.y = element_text(size = 10.5))
+         
+       })
 
-ggplot(data = exp_slopes,
-       mapping = aes(x = estimate, fill = exp.) ) +
+# get the legends for these plots separately
+f2l <- 
+  lapply(split(exp_slopes, exp_slopes$pos_slopes),
+         function(x) {
+           
+           y <- 
+             ggplot(data = x,
+                  mapping = aes(x = estimate, fill = exp.) ) +
+             geom_density(alpha = 0.5, colour = "white") +
+             scale_fill_viridis_d(option = "C", end = 0.9) +
+             theme_meta() +
+             theme(legend.position = "bottom",
+                   legend.key = element_blank(),
+                   legend.title = element_blank(),
+                   legend.key.size = unit(0.75,"line"),
+                   legend.text = element_text(size = 8))
+           
+           gglegend(y)
+           
+         })
+
+
+### model data
+
+# load in the model data
+mod_dat <- read_delim(file = here("data/stachova_leps_model_data_full.csv"),
+                      delim = ",")
+head(mod_dat)
+
+# get the last time point for each replicate from these data
+mod_dat_t <- 
+  mod_dat %>%
+  filter(time == last(time))
+
+mod_dat_t <- 
+  mod_dat_t %>%
+  filter(species_pool > 1)
+
+# rename the run column to model
+mod_dat_t <- 
+  mod_dat_t %>%
+  rename(model = run)
+
+# rename the experiments and make it a factor
+mod_names <- 
+  c(1:max(mod_dat_t$model))
+
+mod_dat_t$model <- as.factor(mod_dat_t$model)
+levels(mod_dat_t$model) <- mod_names
+
+# plot the relationship between species pool diversity and biomass
+m1 <- 
+  ggplot(data = mod_dat_t,
+       mapping = aes(x = species_pool, y = community_biomass, colour = model) ) +
+  geom_jitter(width = 0.5, alpha = 0.6) +
+  geom_smooth(method = "lm", size = 0.75, se = FALSE) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  ylab(l2) +
+  xlab(l3) +
+  theme_meta() +
+  theme(legend.position = "none")
+
+
+# run the slopes function on all the datasets
+
+# convert data to a list first
+mod_dat_t_l <- split(select(mod_dat_t, -model), mod_dat_t$model )
+
+est_mod <- vector("list", length = length(mod_names))
+for (i in 1:length(mod_dat_t_l )) {
+  
+  est_mod[[i]] <- slope_est_func(data = mod_dat_t_l[[i]], reps = 150, plots = 0.75)
+  
+}
+
+unlist(lapply(est_mod, function(x) { min(x$n) }))
+
+# bind the function output into a dataframe
+mod_slopes <- 
+  bind_rows(est_mod, .id = "model")
+
+mod_slopes$model <- as.factor(mod_slopes$model)
+levels(mod_slopes$model) <- mod_names
+
+m2 <- 
+  ggplot(data = mod_slopes,
+       mapping = aes(x = estimate, fill = model) ) +
   geom_density(alpha = 0.5, colour = "white") +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
   scale_fill_viridis_d(option = "C", end = 0.9) +
-  ylab(ylab2) +
-  xlab(xlab2) +
+  ylab(l4) +
+  xlab(l5) +
+  theme_meta() +
+  theme(legend.position = "none",
+        legend.key = element_blank(),
+        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+        axis.text.y = element_text(size = 10.5))
+
+# get the legend
+m2l <- 
+  ggplot(data = mod_slopes,
+       mapping = aes(x = estimate, fill = model) ) +
+  geom_density(alpha = 0.5, colour = "white") +       
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank(),
+        legend.title = element_blank(),
+        legend.key.size = unit(0.75,"line"),
+        legend.text = element_text(size = 8))
+m2l <- gglegend(m2l)
+
+# combine these plots
+g1 <- 
+  ggpubr::ggarrange(m1, f1[[1]], f1[[2]], ncol = 3, nrow = 1,
+                  widths = c(1, 1.1, 1.1),
+                  labels = c("a", "c", "e"),
+                  font.label = list(size = 12, color = "black", face = "plain", family = NULL))
+
+g2 <- 
+  ggpubr::ggarrange(m2, f2[[1]], f2[[2]], 
+                  ncol = 3, nrow = 1,
+                  heights = c(1, 0.2),
+                  widths = c(1, 1.1, 1.1),
+                  labels = c("b", "d", "f"),
+                  font.label = list(size = 12, color = "black", face = "plain", family = NULL))
+
+g3 <- 
+  ggpubr::ggarrange(m2l, f2l[[1]], f2l[[2]], 
+                    ncol = 3, nrow = 1,
+                    heights = c(1, 0.2),
+                    labels = NULL)
+
+g_comb <- 
+  ggpubr::ggarrange(g1, g2, g3,
+                  ncol = 1, nrow = 3, 
+                  heights = c(1, 1, 0.25))
+
+
+ggsave(filename = here("figures/fig_2.png"), 
+       plot = g_comb, width = 21, height = 19, units = "cm",
+       dpi = 450)
+
+
+
+
+
+### additional plots
+
+# plot the relationship between species pool range and slope
+
+exp_slopes %>%
+  group_by(exp.) %>%
+  mutate(samp_pool = if_else(sp_range == min(sp_range), "< median", 
+                             if_else(sp_range == max(sp_range), "full gradient", "> median"))) %>%
+  ungroup() %>%
+  ggplot(data = .,
+       mapping = aes(x = estimate, fill = exp. ) ) +
+  geom_density(alpha = 0.5, colour = "white") +
+  geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  facet_wrap(~samp_pool) +
+  # ylab(ylab2) +
+  # xlab(xlab2) +
   theme_meta() +
   theme(legend.position = "bottom",
         legend.key = element_blank())
 
-exp_slopes %>%
-  group_by(experiment, spp_pool) %>%
-  summarise(rr = mean(realised_richness_range),
-            sp_pool = mean(sp_range))
-
-
-
-# plot the relationship between species pool range and slope
-ggplot(data = exp_slopes,
-       mapping = aes(x = sp_range, y = estimate, colour = exp.) ) +
-  geom_jitter(width = 0.5, alpha = 0.1) +
-  geom_smooth(se = FALSE, method = "lm", size = 0.75) +
-  geom_hline(yintercept = 0, colour = "red", linetype = "dashed", size = 1) +
-  scale_colour_viridis_d(option = "C", end = 0.9) +
+mod_slopes %>%
+  group_by(model) %>%
+  mutate(samp_pool = if_else(sp_range == min(sp_range), "< median", 
+                             if_else(sp_range == max(sp_range), "full gradient", "> median"))) %>%
+  ungroup() %>%
+  ggplot(data = .,
+         mapping = aes(x = estimate, fill = model ) ) +
+  geom_density(alpha = 0.5, colour = "white") +
+  geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
+  scale_fill_viridis_d(option = "C", end = 0.9) +
+  facet_wrap(~samp_pool) +
   # ylab(ylab2) +
   # xlab(xlab2) +
   theme_meta() +
@@ -134,15 +326,7 @@ ggplot(data = exp_slopes,
         legend.key = element_blank())
 
 
-# f_comb <- 
-  # ggarrange(f1, f2, ncol = 1, nrow = 2,
-            # labels = c("a", "b"),
-            # font.label = list(size = 12, color = "black", face = "plain", family = NULL),
-            # heights = c(1, 1.25, 1, 1.25))
 
-#ggsave(filename = here("figures/fig_2.png"), 
-       # plot = f_comb, width = 19, height = 19, units = "cm",
-       # dpi = 450)
 
 
 

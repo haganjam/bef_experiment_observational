@@ -30,6 +30,10 @@ mod_dat_t <-
   mod_dat %>%
   filter(time == last(time))
 
+mod_dat_t <- 
+  mod_dat_t %>%
+  filter(species_pool > 1)
+
 # rename the run column to model
 mod_dat_t <- 
   mod_dat_t %>%
@@ -64,9 +68,9 @@ ggplot(data = mod_dat_t,
 mod_dat_t_l <- split(select(mod_dat_t, -model), mod_dat_t$model )
 
 est_mod <- vector("list", length = length(mod_names))
-for (i in 1:length(data_col)) {
+for (i in 1:length(mod_dat_t_l )) {
   
-  est_mod[[i]] <- slope_est_func(data = mod_dat_t_l[[i]], reps = 100, plots = 0.66 )
+  est_mod[[i]] <- slope_est_func(data = mod_dat_t_l[[i]], reps = 100, plots = 0.75)
   
 }
 
@@ -93,6 +97,8 @@ ggplot(data = mod_slopes,
   theme_meta() +
   theme(legend.position = "bottom",
         legend.key = element_blank())
+
+
 
 
 
