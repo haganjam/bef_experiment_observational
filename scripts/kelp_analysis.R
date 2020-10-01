@@ -94,7 +94,6 @@ kelp_gam <-
   select(SITE, species_pool, community_biomass_m, community_biomass_se)
 
 
-
 ggplot(data = kelp_gam,
          mapping = aes(x = species_pool, 
                        y = community_biomass_m) ) +
