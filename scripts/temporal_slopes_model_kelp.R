@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Randomly sample time points from the model (like the kelp data)
+# Title: Model and kelp analysis
 
 # load relevant libraries
 library(readr)

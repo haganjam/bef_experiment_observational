@@ -18,7 +18,13 @@ if(! dir.exists(here("figures"))){
 
 # where to access functions from
 source(here("scripts/function_plotting_theme.R"))
-source(here("scripts/realised_div_slope_function.R"))
+
+# set up axis labels
+l1 <- expression(sqrt(paste("community biomass (g ",  " m"^"-2", ")") ))
+l2 <- c("community biomass")
+l3 <- c("initial diversity")
+l4 <- expression(paste("realised ", alpha, " diversity"))
+l5 <- c("model")
 
 # load the model data
 mod_dat <- read_delim(here("data/stachova_leps_model_data_full.csv"), delim = ",")
@@ -32,6 +38,11 @@ mod_dat_t <-
 mod_dat_t <- 
   mod_dat_t %>%
   filter(species_pool > 1)
+
+# get the first four species pool diversities to match with the Jena data
+mod_dat_t <- 
+  mod_dat_t %>%
+  filter(species_pool %in% c(5, 10, 15, 20))
 
 
 # plot the realised diversity function relationship for each model
@@ -59,21 +70,21 @@ ggplot(data = dfx,
 
 # choose the most representative run and then put the rest in the supplementary
 
+# run 6
+
 
 # load the Jena data
 jena_dat <- read_delim(here("data/jena_analysis_data.csv"), delim = ",")
 
 # combine these datasets into a list
-box.1_dat <- list(filter(mod_dat_t, run == 3),
-                  jena_dat)
+box.1_dat <- list(filter(mod_dat_t, run == 6), jena_dat)
 
 
 # plot species pool diversity versus function
 
 # set the y axis labels
 ylabs1 <- 
-  list(c("community biomass"), 
-       expression(paste("community biomass (g ",  " m"^"-2", ")") ) )
+  list(l2, l1 )
 
 box.1_fab <- vector("list")
 for (i in 1:length(box.1_dat)) {
@@ -84,13 +95,13 @@ for (i in 1:length(box.1_dat)) {
     geom_jitter(width = 0.5, size = 1.5) +
     geom_smooth(method = "lm", size = 0.5, colour = "black", alpha = 0.3) +
     ylab(ylabs1[[i]]) +
-    xlab("initial diversity") +
+    xlab(l3) +
     theme_meta()
   
 }
 
 f1 <- 
-  ggarrange(box.1_fab[[1]], box.1_fab[[2]], labels = c("a", "b"),
+  ggpubr::ggarrange(box.1_fab[[1]], box.1_fab[[2]], labels = c("a", "b"),
             font.label = list(size = 12, color = "black", face = "plain", family = NULL))
 
 
@@ -115,8 +126,8 @@ for (i in 1:length(box.1_dat)) {
     geom_jitter(width = 0.25, size = 1.5) +
     geom_smooth(method = "lm", size = 0.75, se = FALSE) +
     ylab(ylabs1[[i]]) +
-    xlab("realised diversity") +
-    labs(colour = "initial diversity") +
+    xlab(l4) +
+    labs(colour = l3) +
     scale_colour_viridis_d(option = "C", end = 0.9) +
     theme_meta() +
     theme(legend.position = "bottom",
@@ -125,15 +136,15 @@ for (i in 1:length(box.1_dat)) {
 }
 
 
-f2 <- ggarrange(box.1_fcd[[1]], box.1_fcd[[2]], labels = c("c", "d"),
+f2 <- ggpubr::ggarrange(box.1_fcd[[1]], box.1_fcd[[2]], labels = c("c", "d"),
             font.label = list(size = 12, color = "black", face = "plain", family = NULL))
 
 # join these two figures together
-fig1 <- ggarrange(f1, f2, ncol = 1, nrow = 2, labels = NULL,
+fig1 <- ggpubr::ggarrange(f1, f2, ncol = 1, nrow = 2, labels = NULL,
                   heights = c(1, 1.25))
 
 ggsave(filename = here("figures/box1_fig1.png"), 
-       plot = fig1, width = 19, height = 19, units = "cm",
+       plot = fig1, width = 17, height = 19, units = "cm",
        dpi = 450)
 
 
