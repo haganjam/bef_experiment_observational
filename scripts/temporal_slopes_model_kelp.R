@@ -113,7 +113,7 @@ g1 <-
   theme_meta() +
   theme(legend.position = "none")
 
-g2 <- 
+g2x <- 
   mod_time_s %>%
   group_by(run, id) %>%
   summarise(species_pool = mean(species_pool, na.rm = TRUE),
@@ -127,23 +127,15 @@ g2 <-
   xlab(l3) +
   geom_smooth(se = FALSE, method = "lm", size = 0.75) +
   scale_colour_viridis_d(option = "C", end = 0.9) +
-  theme_meta() +
+  theme_meta()
+
+g2 <- 
+  g2x +
   theme(legend.position = "none")
 
 # get a legend for this plot
 g2l <- 
-  mod_time_s %>%
-  group_by(run, id) %>%
-  summarise(species_pool = mean(species_pool, na.rm = TRUE),
-            community_biomass_m = mean(community_biomass, na.rm = TRUE),
-            community_biomass_se = sd(community_biomass, na.rm = TRUE)/sqrt(n()), .groups = "drop") %>%
-  mutate(model = as.character(run)) %>%
-  ggplot(data = .,
-         mapping = aes(x = species_pool, y = community_biomass_m, colour = model) ) +
-  geom_jitter(width = 0.5, alpha = 0.75) +
-  geom_smooth(se = FALSE, method = "lm", size = 0.75) +
-  scale_colour_viridis_d(option = "C", end = 0.9) +
-  theme_meta() +
+  g2x +
   theme(legend.position = "bottom",
       legend.key.size = unit(0.75,"line"),
       legend.text = element_text(size = 8),
@@ -189,7 +181,7 @@ alpha_est <-
 
 
 
-g3 <- 
+g3x <- 
   kelp_alpha %>%
   mutate(community_biomass = sqrt(community_biomass),
          YEAR = as.character(YEAR)) %>%
@@ -200,20 +192,15 @@ g3 <-
   scale_colour_viridis_d(option = "C", end = 0.9) +
   ylab(l1) +
   xlab(l4) +
-  theme_meta() +
+  theme_meta()
+
+g3 <- 
+  g3x +
   theme(legend.position = "none")
 
 # get the legend from this plot
 g3l <- 
-  kelp_alpha %>%
-  mutate(community_biomass = sqrt(community_biomass),
-         year = as.character(YEAR)) %>%
-  ggplot(data = .,
-         mapping = aes(x = realised_richness, y = sqrt(community_biomass), colour = year) ) +
-  geom_point(alpha = 0.75) +
-  geom_smooth(se = FALSE, method = "lm", size = 0.75) +
-  scale_colour_viridis_d(option = "C", end = 0.9) +
-  theme_meta() +
+  g3x +
   theme(legend.position = "bottom",
         legend.key.size = unit(0.75,"line"),
         legend.text = element_text(size = 8),

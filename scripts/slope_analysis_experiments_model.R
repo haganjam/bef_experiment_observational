@@ -224,7 +224,7 @@ mod_slopes <-
 mod_slopes$model <- as.factor(mod_slopes$model)
 levels(mod_slopes$model) <- mod_names
 
-m2 <- 
+m2x <- 
   ggplot(data = mod_slopes,
        mapping = aes(x = estimate, fill = model) ) +
   geom_density(alpha = 0.5, colour = "white") +
@@ -232,7 +232,10 @@ m2 <-
   scale_fill_viridis_d(option = "C", end = 0.9) +
   ylab(l4) +
   xlab(l5) +
-  theme_meta() +
+  theme_meta()
+
+m2 <- 
+  m2x +
   theme(legend.position = "none",
         legend.key = element_blank(),
         axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
@@ -240,16 +243,13 @@ m2 <-
 
 # get the legend
 m2l <- 
-  ggplot(data = mod_slopes,
-       mapping = aes(x = estimate, fill = model) ) +
-  geom_density(alpha = 0.5, colour = "white") +       
-  scale_fill_viridis_d(option = "C", end = 0.9) +
-  theme_meta() +
+  m2x +
   theme(legend.position = "bottom",
         legend.key = element_blank(),
         legend.title = element_blank(),
         legend.key.size = unit(0.75,"line"),
         legend.text = element_text(size = 8))
+
 m2l <- gglegend(m2l)
 
 # combine these plots
