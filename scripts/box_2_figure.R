@@ -84,7 +84,7 @@ p1 <-
         panel.border = element_blank(),
         axis.line.x = element_line(color="black", size = 0.5),
         axis.line.y = element_line(color="black", size = 0.5),
-        plot.margin=unit(c(1.5,1.5,1.5,4),"cm"))
+        plot.margin=unit(c(1.5,1.5,1.5,3.5),"cm"))
 
 
 # set up the axis labels
@@ -110,8 +110,8 @@ c1l <-
   ggtitle("(a) case 1") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.x = element_text(size = 11, margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(size = 11, margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(size = 11, margin=margin(0,5,0,0,"pt")),
         plot.title = element_text(hjust = -0.2, vjust = 2, size = 11, face = "bold"))
 
 c1r <- 
@@ -123,8 +123,8 @@ c1r <-
   ggtitle("") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.x = element_text(size = 11, margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(size = 11, margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(size = 11, margin=margin(0,5,0,0,"pt")),
         plot.title = element_text(hjust = -0.2, vjust = 2, size = 11, face = "bold"))
 
 cs1 <- ggarrange(c1l, c1r)
@@ -141,8 +141,8 @@ c2l <-
   ggtitle("(b) case 2") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.x = element_text(size = 11, margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(size = 11, margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(size = 11, margin=margin(0,5,0,0,"pt")),
         plot.title = element_text(hjust = -0.2, vjust = 2, size = 11, face = "bold"))
 
 c2r <- 
@@ -154,8 +154,8 @@ c2r <-
   ggtitle("") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.x = element_text(size = 11, margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(size = 11, margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(size = 11, margin=margin(0,5,0,0,"pt")),
         plot.title = element_text(hjust = -0.2, vjust = 2, size = 11, face = "bold"))
 
 cs2 <- ggarrange(c2l, c2r)
@@ -172,8 +172,8 @@ c3l <-
   ggtitle("(c) case 3") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.x = element_text(size = 11, margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(size = 11, margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(size = 11, margin=margin(0,5,0,0,"pt")),
         plot.title = element_text(hjust = -0.2, vjust = 2, size = 11, face = "bold"))
 
 c3r <- 
@@ -185,8 +185,8 @@ c3r <-
   ggtitle("") +
   theme(axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.x = element_text(size = 11, margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(size = 11, margin=margin(5,0,0,0,"pt")),
+        axis.title.y = element_text(size = 11, margin=margin(0,5,0,0,"pt")),
         plot.title = element_text(hjust = -0.2, vjust = 2, size = 11, face = "bold"))
 
 cs3 <- ggarrange(c3l, c3r)
@@ -200,6 +200,7 @@ ggsave(filename = here("figures/box_2/fig_1_t.png"),
        plot = box_2_f1, width = 21, height = 14, units = "cm",
        dpi = 450)
 
+# make the pies
 
 
 
