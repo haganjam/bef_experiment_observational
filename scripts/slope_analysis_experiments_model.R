@@ -93,7 +93,11 @@ f1 <-
            ylab(l1) +
            xlab(l3) +
            theme_meta() +
-           theme(legend.position = "none")
+           theme(legend.position = "none",
+                 axis.title.x = element_text(size = 9),
+                       axis.title.y = element_text(size = 9),
+                       axis.text.x = element_text(size = 8),
+                       axis.text.y = element_text(size = 8))
          
        })
 
@@ -135,12 +139,15 @@ f2 <-
            theme_meta() +
            theme(legend.position = "none",
                  legend.key = element_blank(),
-                 axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
-                 axis.text.y = element_text(size = 10.5))
+                 axis.title.x = element_text(size = 8.5),
+                       axis.title.y = element_text(size = 9, margin=margin(0,15,0,0,"pt")),
+                       axis.text.x = element_text(size = 8),
+                       axis.text.y = element_text(size = 8))
          
        })
 
 # get the legends for these plots separately
+
 f2l <- 
   lapply(split(exp_slopes, exp_slopes$pos_slopes),
          function(x) {
@@ -150,12 +157,13 @@ f2l <-
                   mapping = aes(x = estimate, fill = exp.) ) +
              geom_density(alpha = 0.5, colour = "white") +
              scale_fill_viridis_d(option = "C", end = 0.9) +
+             guides(fill = guide_legend(nrow=2,byrow=TRUE)) +
              theme_meta() +
              theme(legend.position = "bottom",
                    legend.key = element_blank(),
                    legend.title = element_blank(),
-                   legend.key.size = unit(0.75,"line"),
-                   legend.text = element_text(size = 8))
+                   legend.key.size = unit(0.6,"line"),
+                   legend.text = element_text(size = 7))
            
            gglegend(y)
            
@@ -200,7 +208,11 @@ m1 <-
   ylab(l2) +
   xlab(l3) +
   theme_meta() +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  theme(axis.title.x = element_text(size = 9),
+        axis.title.y = element_text(size = 9),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8))
 
 
 # run the slopes function on all the datasets
@@ -237,9 +249,10 @@ m2x <-
 m2 <- 
   m2x +
   theme(legend.position = "none",
-        legend.key = element_blank(),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
-        axis.text.y = element_text(size = 10.5))
+        axis.title.y = element_text(size = 9, margin=margin(0,15,0,0,"pt")),
+        axis.title.x = element_text(size = 8.5),
+        axis.text.y = element_text(size = 8),
+        axis.text.x = element_text(size = 8))
 
 # get the legend
 m2l <- 
@@ -247,15 +260,15 @@ m2l <-
   theme(legend.position = "bottom",
         legend.key = element_blank(),
         legend.title = element_blank(),
-        legend.key.size = unit(0.75,"line"),
-        legend.text = element_text(size = 8))
+        legend.key.size = unit(0.6,"line"),
+        legend.text = element_text(size = 7))
 
 m2l <- gglegend(m2l)
 
 # combine these plots
 g1 <- 
   ggpubr::ggarrange(m1, f1[[1]], f1[[2]], ncol = 3, nrow = 1,
-                  widths = c(1, 1.1, 1.1),
+                  widths = c(1, 1.05, 1.05),
                   labels = c("a", "c", "e"),
                   font.label = list(size = 12, color = "black", face = "plain", family = NULL))
 
@@ -263,25 +276,24 @@ g2 <-
   ggpubr::ggarrange(m2, f2[[1]], f2[[2]], 
                   ncol = 3, nrow = 1,
                   heights = c(1, 0.2),
-                  widths = c(1, 1.1, 1.1),
+                  widths = c(1, 1.05, 1.05),
                   labels = c("b", "d", "f"),
                   font.label = list(size = 12, color = "black", face = "plain", family = NULL))
 
 g3 <- 
   ggpubr::ggarrange(m2l, f2l[[1]], f2l[[2]], 
                     ncol = 3, nrow = 1,
-                    heights = c(1, 0.2),
-                    labels = NULL)
+                    labels = NULL,
+                    align = "v")
 
 g_comb <- 
   ggpubr::ggarrange(g1, g2, g3,
                   ncol = 1, nrow = 3, 
-                  heights = c(1, 1, 0.25))
+                  heights = c(1, 1, 0.2))
 
 
-ggsave(filename = here("figures/fig_2.png"), 
-       plot = g_comb, width = 21, height = 19, units = "cm",
-       dpi = 450)
+ggsave(filename = here("figures/fig_2.pdf"), 
+       plot = g_comb, width = 17.3, height = 15, units = "cm")
 
 
 

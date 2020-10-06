@@ -131,7 +131,8 @@ g2x <-
 
 g2 <- 
   g2x +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.title.y = element_text(margin=margin(0,10,0,0,"pt")))
 
 # get a legend for this plot
 g2l <- 
@@ -184,9 +185,9 @@ alpha_est <-
 g3x <- 
   kelp_alpha %>%
   mutate(community_biomass = sqrt(community_biomass),
-         YEAR = as.character(YEAR)) %>%
+         year = as.character(YEAR)) %>%
   ggplot(data = .,
-         mapping = aes(x = realised_richness, y = sqrt(community_biomass), colour = YEAR) ) +
+         mapping = aes(x = realised_richness, y = sqrt(community_biomass), colour = year) ) +
   geom_point(alpha = 0.75) +
   geom_smooth(se = FALSE, method = "lm", size = 0.75) +
   scale_colour_viridis_d(option = "C", end = 0.9) +
@@ -196,7 +197,8 @@ g3x <-
 
 g3 <- 
   g3x +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.title.y = element_text(margin=margin(0,10,0,0,"pt")))
 
 # get the legend from this plot
 g3l <- 
@@ -266,9 +268,9 @@ f_comb <-
                     ncol = 2, nrow = 1)
 
 
-ggsave(filename = here("figures/fig_4.png"), 
-       plot = f_comb, width = 15, height = 17, units = "cm",
-       dpi = 450)
+ggsave(filename = here("figures/fig_4.pdf"), 
+       plot = f_comb, width = 17.3, height = 16, units = "cm")
+
 
 
 

@@ -22,7 +22,7 @@ source(here("scripts/function_plotting_theme.R"))
 # set up axis labels
 l1 <- expression(sqrt(paste("community biomass (g ",  " m"^"-2", ")") ))
 l2 <- c("community biomass")
-l3 <- c("initial diversity")
+l3 <- expression(paste("initial ", alpha, " diversity"))
 l4 <- expression(paste("realised ", alpha, " diversity"))
 l5 <- c("model")
 
@@ -101,7 +101,7 @@ for (i in 1:length(box.1_dat)) {
 }
 
 f1 <- 
-  ggpubr::ggarrange(box.1_fab[[1]], box.1_fab[[2]], labels = c("a", "b"),
+  ggpubr::ggarrange(box.1_fab[[1]], box.1_fab[[2]], labels = c("a", "c"),
             font.label = list(size = 12, color = "black", face = "plain", family = NULL))
 
 
@@ -136,15 +136,15 @@ for (i in 1:length(box.1_dat)) {
 }
 
 
-f2 <- ggpubr::ggarrange(box.1_fcd[[1]], box.1_fcd[[2]], labels = c("c", "d"),
+f2 <- ggpubr::ggarrange(box.1_fcd[[1]], box.1_fcd[[2]], labels = c("b", "d"),
             font.label = list(size = 12, color = "black", face = "plain", family = NULL))
 
 # join these two figures together
 fig1 <- ggpubr::ggarrange(f1, f2, ncol = 1, nrow = 2, labels = NULL,
                   heights = c(1, 1.25))
 
-ggsave(filename = here("figures/box1_fig1.png"), 
-       plot = fig1, width = 17, height = 19, units = "cm",
+ggsave(filename = here("figures/box1_fig1.pdf"), 
+       plot = fig1, width = 17.3, height = 16, units = "cm",
        dpi = 450)
 
 
