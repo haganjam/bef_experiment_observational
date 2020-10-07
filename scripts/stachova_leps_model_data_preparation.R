@@ -41,8 +41,8 @@ for (i in (1:n_exp) ) {
                  a_sd = 0.2, a_min = 0.2, a_max = 1.2, a_spp = 1,
                  k_min = 3, k_max = 150,
                  r_min = 0.01, r_max = 0.5, 
-                 lsp = c(1, 5, 10, 15, 20, 25),
-                 reps = 50)
+                 lsp = c(1, 5, 10, 15, 20, 25, 30),
+                 reps = 25)
   
 }
 

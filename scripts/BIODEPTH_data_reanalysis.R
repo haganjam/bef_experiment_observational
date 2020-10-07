@@ -87,6 +87,9 @@ bio_d <-
 lapply(bio_d, function(x) { sum(ifelse(x == 0, 1, 0))   })
 
 # remove data points without biomass or any observed species
+bio_d %>%
+  filter(species.observed == 0 | biomass == 0)
+
 bio_d <- 
   bio_d %>%
   filter(species.observed > 0 | biomass > 0)
@@ -130,9 +133,22 @@ for (i in 1:length(bio_d_list) ) {
 }
 
 
+# output a table with the characteristics of the study sites
 
+# rename the experiments and make it a factor
+site_names <- 
+  c("DEU", "PRT", "CHE", "GRC",
+    "IRL.", "SWE", "Shef.", "Silw.")
 
+bio_d$location <- as.factor(bio_d$location)
+levels(bio_d$location) <- site_names
 
+bio_d %>%
+  group_by(location) %>%
+  summarise(treatments = toString( sort(unique(species_pool)) ),
+            plots = n()) %>%
+  write_csv(x = .,
+            path = here("figures/table_s2.csv"))
 
 
 

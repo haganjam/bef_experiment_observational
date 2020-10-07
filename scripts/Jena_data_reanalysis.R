@@ -115,11 +115,6 @@ site_bio <-
 site_bio <- 
   filter(site_bio, time == max(time))
 
-# remove one sample with zero biomass and zero observed species richness
-site_bio <- 
-  site_bio %>%
-  filter( !(observed_sr == 0) )
-
 # rename the variables to match with the function: slope_est_func
 site_bio <- 
   rename(site_bio,
