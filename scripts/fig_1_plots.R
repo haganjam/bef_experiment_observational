@@ -4,16 +4,11 @@
 # Title: Conceptual figure 1
 
 # load relevant libraries
-library(readr)
 library(dplyr)
 library(tidyr)
-library(purrr)
 library(ggplot2)
-library(broom)
-library(RColorBrewer)
 library(viridis)
 library(here)
-library(vegan)
 library(ggpubr)
 
 
@@ -74,21 +69,23 @@ f1a <-
   scale_fill_viridis_d(option = "C", end = 0.9, direction = -1) +
   ggtitle("filtered species pool") +
   theme_meta() +
-  theme(legend.position = "right", 
+  theme(legend.position = "right",
+        legend.title = element_text(size = 11),
+        legend.text = element_text(size = 11),
         axis.text.x = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.x = element_blank(),
         axis.ticks.y = element_blank(),
-        axis.title.x = element_text(size = 11, margin=margin(15,0,0,0,"pt")),
-        axis.title.y = element_text(size = 11, margin=margin(0,15,0,0,"pt")),
-        plot.title = element_text(size = 12, face = "bold", hjust = 0.45, vjust = 2),
+        axis.title.x = element_text(size = 12, margin=margin(15,0,0,0,"pt")),
+        axis.title.y = element_text(size = 12, margin=margin(0,15,0,0,"pt")),
+        plot.title = element_text(size = 13, face = "bold", hjust = 0.45, vjust = 2),
         panel.border = element_blank(),
         axis.line.x = element_line(color="black", size = 0.5),
         axis.line.y = element_line(color="black", size = 0.5))
 
 ggsave(filename = here("figures/fig_1/fig_a.png"), 
-       plot = f1a, width = 9, height = 7, units = "cm",
-       dpi = 450)
+       plot = f1a, width = 7, height = 5, units = "cm",
+       dpi = 600)
 
 
 # local species pool terminology
@@ -133,7 +130,8 @@ b2 <-
   scale_y_continuous(limits = c(0.9, 1.6)) +
   ylab("") +
   xlab(b_term) +
-  annotate(geom = "text", x = 15, y = 1.25, label = "?", size = 18) +
+  annotate(geom = "text", x = 15, y = 1.25, 
+           label = "italic(rarely)~~italic(reported)", parse = TRUE, size = 3.5) +
   ggtitle("") +
   theme_meta() +
   theme(axis.text.x = element_blank(),
@@ -162,8 +160,8 @@ c1 <-
          mapping = aes(x = x, y = y)) +
   ylab(eco_func) +
   xlab(a_term) +
-  annotate(geom = "text", x = 15, y = 1.25, label = "?", size = 18) +
   theme_meta() +
+  annotate(geom = "text", x = 15, y = 1.25, label = "italic(unknown)", parse = TRUE, size = 3.5) +
   ggtitle("(c) BEF field data") +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank(),
@@ -199,8 +197,8 @@ f1bc <-
             labels = NULL)
 
 ggsave(filename = here("figures/fig_1/fig_bc.png"), 
-       plot = f1bc, width = 21, height = 7, units = "cm",
-       dpi = 450)
+       plot = f1bc, width = 21, height = 6.5, units = "cm",
+       dpi = 600)
 
 
 
@@ -269,285 +267,14 @@ f1a_p <- list(p1, p2, p3, p4)
 
 # save these pies using lapply
 
-
-### Box 1, Fig. 1
-
-# pie 5
-
-df4 <- data.frame(
-  group = c("B", "C"),
-  value = c(1, 1)
-)
-
-p4 <- ggplot(df4, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#666666", "#CCCCCC")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-
-df5 <- data.frame(
-  group = c("B", "C", "D"),
-  value = c(2, 1, 1)
-)
-
-p5 <- ggplot(df5, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#666666", "#CCCCCC", "#000000")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-ggarrange(p1, p2, p3, p4, p5)
-
-df6 <- data.frame(
-  group = c("A", "C"),
-  value = c(1, 1)
-)
-
-p6 <- ggplot(df6, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#FFFFFF", "#CCCCCC")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df7 <- data.frame(
-  group = c("A","B","D"),
-  value = c(1, 1, 1)
-)
-
-p7 <- ggplot(df7, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#FFFFFF", "#666666", "#000000")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df8 <- data.frame(
-  group = c("A","B","C","D"),
-  value = c(1, 0.05, 0.3, 0.05)
-)
-
-p8 <- ggplot(df8, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#FFFFFF", "#666666", "#CCCCCC", "#000000")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df9 <- data.frame(
-  group = c("B","C","D"),
-  value = c(0.05, 0.05, 0.05)
-)
-
-p9 <- ggplot(df9, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#666666", "#CCCCCC", "#000000")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df10 <- data.frame(
-  group = c("B","C","D"),
-  value = c(0.05, 0.10, 0.05)
-)
-
-p10 <- ggplot(df10, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#666666", "#CCCCCC", "#000000")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df11 <- data.frame(
-  group = c("B","D"),
-  value = c(0.05, 0.05)
-)
-
-p11 <- ggplot(df11, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#666666", "#000000")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df12 <- data.frame(
-  group = c("A","B"),
-  value = c(0.05, 0.05)
-)
-
-p12 <- ggplot(df12, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#FFFFFF", "#666666")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df13 <- data.frame(
-  group = c("A","D"),
-  value = c(0.05, 0.05)
-)
-
-p13 <- ggplot(df13, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#FFFFFF", "#000000")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-df14 <- data.frame(
-  group = c("B", "C"),
-  value = c(1, 1.3)
-)
-
-p14 <- ggplot(df14, aes(x = "", y = value, fill = group)) +
-  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-  coord_polar("y", start=0) +
-  scale_fill_manual(values=c("#666666", "#CCCCCC")) +
-  theme_void() +
-  theme(legend.position = "none")
-
-
-# make singular charts
-cols <- c("#FFFFFF", "#666666", "#CCCCCC", "#000000")
-
-df_cols <- data.frame(
-  group = c("B"),
-  value = c(1)
-)
-
-df_plots <- vector("list")
-
-for (i in seq_along(1:length(cols))) {
+for (i in 1:length(f1a_p)) {
   
-  df_plots[[i]] <- 
-    ggplot(df_cols, aes(x = "", y = value, fill = group)) +
-    geom_bar(width = 1, stat = "identity", colour = "black", alpha = 0.6) +
-    coord_polar("y", start=0) +
-    scale_fill_manual(values=cols[i]) +
-    theme_void() +
-    theme(legend.position = "none")
+  ggsave(filename = here(paste0("figures/fig_1/pie_",i, ".png") ), 
+         plot = f1a_p[[i]], width = 2.5, height = 2.5, units = "cm",
+         dpi = 600)
   
 }
 
-pies <- 
-  ggarrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14,
-          df_plots[[1]], df_plots[[2]], df_plots[[3]], df_plots[[4]])
-
-pies
-
-ggsave(filename = here("figures/fig_1_pies.png"), plot = pies,
-       dpi = 500)
-
-
-# draw case diagrams (Box 2, fig. 1)
-
-# case 1
-case_1a <- 
-  ggplot() +
-  geom_segment(mapping = aes(x = 1, y = 0.5,
-                             xend = 2, yend = 1.5),
-               size = 0.5, colour = "black") +
-  ylab(eco_func) +
-  xlab("") +
-  scale_x_continuous(limits = c(0.75, 2.25), breaks = c(1, 2)) +
-  scale_y_continuous(limits = c(0.25, 1.75)) +
-  theme_meta() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
-
-case_1b <- ggplot() +
-  geom_segment(mapping = aes(x = 1, y = 0.5,
-                             xend = 2, yend = 1.5),
-               size = 0.5, colour = "black") +
-  ylab("") +
-  xlab("") +
-  scale_x_continuous(limits = c(0.75, 2.25), breaks = c(1, 2)) +
-  scale_y_continuous(limits = c(0.25, 1.75)) +
-  theme_meta() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
-
-case_1 <- ggarrange(case_1a, case_1b)
-case_1  
-
-ggsave(filename = here("figures/case_1.png"), plot = case_1,
-       dpi = 500, units = "cm", width = 10, height = 5)
-
-
-# case 2
-case_2a <- 
-  ggplot() +
-  geom_segment(mapping = aes(x = 3, y = 0.5,
-                             xend = 4, yend = 1.5),
-               size = 0.5, colour = "black") +
-  ylab(eco_func) +
-  xlab(a_term) +
-  scale_x_continuous(limits = c(2.75, 4.25), breaks = c(3, 4)) +
-  scale_y_continuous(limits = c(0.25, 1.75)) +
-  theme_meta() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
-
-case_2b <- 
-  ggplot() +
-  geom_segment(mapping = aes(x = 2, y = 1.5,
-                             xend = 3, yend = 0.5),
-               size = 0.5, colour = "black") +
-  ylab("") +
-  xlab(b_term) +
-  scale_x_continuous(limits = c(1.75, 3.25), breaks = c(2, 3)) +
-  scale_y_continuous(limits = c(0.25, 1.75)) +
-  theme_meta() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
-
-case_2 <- ggarrange(case_2a, case_2b)
-case_2  
-
-ggsave(filename = here("figures/case_2.png"), plot = case_2,
-       dpi = 500, units = "cm", width = 10, height = 5)
-
-# case 3
-case_3a <- 
-  ggplot() +
-  geom_segment(mapping = aes(x = 3, y = 0.5,
-                             xend = 4, yend = 1.5),
-               size = 0.5, colour = "black") +
-  ylab(eco_func) +
-  xlab(a_term) +
-  scale_x_continuous(limits = c(2.75, 4.25), breaks = c(3, 4)) +
-  scale_y_continuous(limits = c(0.25, 1.75)) +
-  theme_meta() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
-
-case_3b <- 
-  ggplot() +
-  geom_segment(mapping = aes(x = 3, y = 0.5,
-                             xend = 4, yend = 1.5),
-               size = 0.5, colour = "black") +
-  ylab("") +
-  xlab(b_term) +
-  scale_x_continuous(limits = c(2.75, 4.25), breaks = c(3, 4)) +
-  scale_y_continuous(limits = c(0.25, 1.75)) +
-  theme_meta() +
-  theme(axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.x = element_text(colour ="black", size = 10, face = "plain", margin=margin(10,0,0,0,"pt")))
-
-case_3 <- ggarrange(case_3a, case_3b)
-case_3  
-
-ggsave(filename = here("figures/case_3.png"), plot = case_3,
-       dpi = 500, units = "cm", width = 10, height = 5)
 
 
 

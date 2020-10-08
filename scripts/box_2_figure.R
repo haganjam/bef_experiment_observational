@@ -4,16 +4,12 @@
 # Title: Conceptual figure for box 1
 
 # load relevant libraries
-library(readr)
 library(dplyr)
 library(tidyr)
-library(purrr)
 library(ggplot2)
 library(broom)
-library(RColorBrewer)
 library(viridis)
 library(here)
-library(vegan)
 library(ggpubr)
 
 
@@ -198,9 +194,139 @@ box_2_f1 <- ggarrange(cs1, p1, cs2, cs3, ncol = 2, nrow = 2)
 
 ggsave(filename = here("figures/box_2/fig_1_t.png"), 
        plot = box_2_f1, width = 21, height = 14, units = "cm",
-       dpi = 450)
+       dpi = 600)
 
-# make the pies
+
+# make the pie charts
+
+# case 1
+c1.1 <- data.frame(
+  group = c("A", "C"),
+  value = c(1, 1)
+)
+
+p1 <- 
+  ggplot(c1.1, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FCCE25FF", "#900DA4FF")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+c1.2 <- data.frame(
+  group = c("A", "C"),
+  value = c(2, 1)
+)
+
+p2 <- 
+  ggplot(c1.2, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FCCE25FF", "#900DA4FF")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+c1.3 <- data.frame(
+  group = c("A"),
+  value = c(1)
+)
+
+p3 <- 
+  ggplot(c1.3, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#FCCE25FF")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+c1.4 <- data.frame(
+  group = c("C"),
+  value = c(1)
+)
+
+p4 <- 
+  ggplot(c1.4, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#900DA4FF")) +
+  theme_void() +
+  theme(legend.position = "none")
+
+
+# case 2
+
+c2.1 <- data.frame(
+  group = c("A", "B", "C", "D"),
+  value = c(1, 1, 1, 1)
+)
+
+p5 <- 
+  ggplot(c2.1, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_viridis_d(option = "C", end = 0.9, direction = -1) +
+  theme_void() +
+  theme(legend.position = "none")
+
+
+c2.2 <- 
+  data.frame(
+    group = c("B", "C", "D"),
+    value = c(1, 1, 1)
+  )
+
+p6 <- 
+  ggplot(c2.2, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#E16462FF", "#900DA4FF", "#0D0887FF" )) +
+  theme_void() +
+  theme(legend.position = "none")
+
+# pie 2
+c2.3 <- 
+  data.frame(
+    group = c("B", "C", "D"),
+    value = c(1, 2, 1)
+  )
+
+p7 <- 
+  ggplot(c2.3, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values=c("#E16462FF", "#900DA4FF", "#0D0887FF" )) +
+  theme_void() +
+  theme(legend.position = "none")
+
+
+# case 3
+
+c3.1 <- data.frame(
+  group = c("A", "B", "C", "D"),
+  value = c(1, 0.05, 0.15, 0.05)
+)
+
+p8 <- 
+  ggplot(c3.1, aes(x = "", y = value, fill = group)) +
+  geom_bar(width = 1, stat = "identity", colour = "black", alpha = 1) +
+  coord_polar("y", start=0) +
+  scale_fill_viridis_d(option = "C", end = 0.9, direction = -1) +
+  theme_void() +
+  theme(legend.position = "none")
+
+
+fp <- list(p1, p2, p3, p4, p5, p6, p7, p8)
+
+# save these pies using lapply
+
+for (i in 1:length(fp)) {
+  
+  ggsave(filename = here(paste0("figures/box_2/pie_",i, ".png") ), 
+         plot = fp[[i]], width = 2.5, height = 2.5, units = "cm",
+         dpi = 600)
+  
+}
+
 
 
 
