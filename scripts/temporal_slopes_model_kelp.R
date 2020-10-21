@@ -20,6 +20,7 @@ l2 <- c("community biomass")
 l3 <- expression(paste(alpha, " species pool", " diversity"))
 l4 <- expression(paste("realised ", alpha, " diversity-", "function", " est."))
 l5 <- c("model")
+l6 <- expression(paste("realised ", alpha, " diversity"))
 
 
 ### analyse the temporal model data
@@ -192,7 +193,7 @@ g3x <-
   geom_smooth(se = FALSE, method = "lm", size = 0.75) +
   scale_colour_viridis_d(option = "C", end = 0.9) +
   ylab(l1) +
-  xlab(l4) +
+  xlab(l6) +
   theme_meta()
 
 g3 <- 
