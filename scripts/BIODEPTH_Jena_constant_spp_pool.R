@@ -43,9 +43,16 @@ bio_d <-
 
 # subset out the constant species pool locations
 
+# minimal species pool variation among highest diversity treatments
+
 # greece (location = 4)
 # sweden (location = 6)
 # portugal (location = 2)
+
+# unclear how much species pool variation there is among highest diversity treatments
+
+# ireland (location = 5)
+# sheffield (location = 7)
 
 bio_con <- 
   bio_d %>%
