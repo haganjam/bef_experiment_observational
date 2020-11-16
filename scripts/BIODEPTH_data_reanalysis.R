@@ -60,7 +60,8 @@ bio_d %>%
 # check number of replicates for each treatment and location
 bio_d %>%
   group_by(location, species.richness) %>%
-  summarise(n = n())
+  summarise(n = n()) %>%
+  View()
 
 bio_d %>%
   filter(location == 3) %>%
