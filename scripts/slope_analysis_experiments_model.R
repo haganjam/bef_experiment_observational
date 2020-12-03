@@ -106,7 +106,7 @@ f1 <-
 est_col <- vector("list", length = length(data_col))
 for (i in 1:length(data_col)) {
   
-  est_col[[i]] <- slope_est_func(data = data_col[[i]], reps = 150, plots = 0.75)
+  est_col[[i]] <- slope_est_func(data = data_col[[i]], reps = 150, plots = 0.5)
   
 }
 
@@ -133,7 +133,7 @@ f2 <-
            geom_density(alpha = 0.5, colour = "white") +
            geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
            scale_fill_viridis_d(option = "C", end = 0.9) +
-           scale_y_continuous(breaks = c(0.0, 0.5, 1.0, 1.5, 2, 2.5)) +
+           # scale_y_continuous(breaks = c(0.0, 0.5, 1.0, 1.5, 2, 2.5)) +
            ylab(l4) +
            xlab(l5) +
            theme_meta() +
@@ -223,7 +223,7 @@ mod_dat_t_l <- split(select(mod_dat_t, -model), mod_dat_t$model )
 est_mod <- vector("list", length = length(mod_names))
 for (i in 1:length(mod_dat_t_l )) {
   
-  est_mod[[i]] <- slope_est_func(data = mod_dat_t_l[[i]], reps = 150, plots = 0.75)
+  est_mod[[i]] <- slope_est_func(data = mod_dat_t_l[[i]], reps = 150, plots = 0.5)
   
 }
 
