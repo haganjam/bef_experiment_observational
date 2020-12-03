@@ -18,23 +18,9 @@ slope_est_func <- function(data, reps = 250, plots = 0.3) {
       "this function requires dplyr to be installed"
     )
   
-  sp <- sort(unique(data$species_pool), decreasing = FALSE)
+  x <- data
   
-  g <- matrix(c(min(sp), sp[median(1:length(sp))], min(sp), 
-                sp[median(1:length(sp))], max(sp), max(sp)), 
-              nrow = 3, ncol = 2)
-    
-    est_out <- vector("list", length = nrow(g))
-    
-    for (s in c(1:nrow(g)) ) {
-      
-      x <- 
-        data %>%
-        dplyr::filter(species_pool >= g[s, 1],
-                      species_pool <= g[s, 2])
-      
-      
-      rep_out <- vector("list", length = reps)
+  rep_out <- vector("list", length = reps)
       
       for (i in c(1:reps) ) {
         
@@ -68,18 +54,10 @@ slope_est_func <- function(data, reps = 250, plots = 0.3) {
         }
         
       }
-      
-      est_out[[s]] <- 
-        dplyr::bind_rows(rep_out, .id = "rep") %>%
-        dplyr::mutate(sp_low = g[s, 1],
-                      sp_upp = g[s, 2]) %>%
-        dplyr::mutate(sp_range = (sp_upp - sp_low) )
-      
-    }
     
     # bind this output into a dataframe
     ran_est_out <- 
-      dplyr::bind_rows(est_out, .id = "spp_pool")
+      dplyr::bind_rows(rep_out, .id = "replicate")
     
     # remove duplicate rows
     ran_est_out <- 
