@@ -67,9 +67,9 @@ slope_est_func <- function(data, reps = 250, plots = 0.3) {
     ran_est_out <- 
       filter(ran_est_out, !is.na(std.error))
     
-    # remove slopes that were estimated from less than 15 data points
+    # remove slopes that were estimated from less than 10 data points
     ran_est_out <- 
-      filter(ran_est_out, n >= 15)
+      filter(ran_est_out, n >= 10)
     
     # get only the species richness slope and remove any where realised diversity range was below 1
     est_all <- 
