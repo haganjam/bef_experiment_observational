@@ -3,6 +3,9 @@
 
 # Title: run the Thompson model for a given set of parameters
 
+# deal with the replication issue!
+
+
 # sim1: homogeneous environmental conditions
 sim.pars <- 
   expand.grid(replicate = c(1:5),

@@ -235,8 +235,6 @@ df.out <-
         het.hom = "hom",
         ext.thresh = 0.2)
 
-df.out
-
 ggplot(data = df.out,
        mapping = aes(x = richness, y = functioning)) +
   geom_jitter() +
