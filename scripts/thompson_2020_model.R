@@ -197,53 +197,53 @@ bef.sim <- function(lsp = c(5, 10, 15, 20, 25),
     } 
     )
   
-  return(l.out)
+  # bind the rows together
+  bef.res <- bind_rows(l.out, .id = "patch")
+  
+  # add a column for the local species pool
+  lsp.patch <- 
+    bef.res %>%
+    filter(time == min(time)) %>%
+    group_by(patch) %>%
+    summarise(local.sp.pool = sum(if_else(abundance > 0, 1, 0)), .groups = "drop")
+  
+  bef.func <- 
+    bef.res %>%
+    filter(time == max(time)) %>%
+    group_by(patch, time) %>%
+    summarise(richness = sum(if_else(abundance > 0, 1, 0)),
+              functioning = sum(abundance), .groups = "drop")
+  
+  # join these data.frames together
+  sim.proc <- full_join(bef.func, lsp.patch, by = "patch")
+  
+  return(sim.proc)
   
 }
 
 # test this function with limited time-steps
-bef.sim.out <- 
+df.out <- 
   bef.sim(lsp = c(30),
-          lsp.type = "no.disp.lim",
-          reps = 10,
-          rsp = 50,
-          t_steps = 10,
-          rmax = 5, sd.op = 0.25,
-          n0 = 0.5,
-          sim.comp = "sym",
-          a_mean = 0.8, a_sd = 0.2, a_min = 0.2, a_max = 1.2, a_spp = 1,
-          het.hom = "het",
-          ext.thresh = 0.2)
+        lsp.type = "comp.equal",
+        reps = 50,
+        rsp = 50,
+        t_steps = 500,
+        rmax = 5, sd.op = 0.25,
+        n0 = 0.5,
+        sim.comp = "sym",
+        a_mean = 0.5, a_sd = 0.2, a_min = 0, a_max = 1, a_spp = 1,
+        het.hom = "hom",
+        ext.thresh = 0.2)
+
+df.out
+
+ggplot(data = df.out,
+       mapping = aes(x = richness, y = functioning)) +
+  geom_jitter() +
+  geom_smooth(method = "lm") +
+  theme_bw()
 
 
-# process the output data
-library(dplyr)
-library(ggplot2)
-
-# bind the rows together
-bef.res <- bind_rows(bef.sim.out, .id = "patch")
-
-# add a column for the local species pool
-lsp.patch <- 
-  bef.res %>%
-  filter(time == min(time)) %>%
-  group_by(patch) %>%
-  summarise(local.sp.pool = sum(if_else(abundance > 0, 1, 0)), .groups = "drop")
-
-bef.func <- 
-  bef.res %>%
-  filter(time == max(time)) %>%
-  group_by(patch, time) %>%
-  summarise(richness = sum(if_else(abundance > 0, 1, 0)),
-            functioning = sum(abundance), .groups = "drop")
-
-# join these data.frames together
-sim.proc <- full_join(bef.func, lsp.patch, by = "patch")
-
-# plot the results
-ggplot(data = sim.proc,
-       mapping = aes(x = richness, y = functioning, colour = local.sp.pool)) +
-  geom_point()
 
 
 
