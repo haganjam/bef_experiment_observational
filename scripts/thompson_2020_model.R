@@ -1,5 +1,9 @@
 
-# Thompson et al. (2018): Model formulation
+# Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
+
+# Title: Function to implement a simulation model that can handle heterogeneity and different species pool distributions
+
+# model is a reformulation of the model from Thompson et al. (2020), Ecology Letters
 
 # explanation of the model parameters and their default values
 
