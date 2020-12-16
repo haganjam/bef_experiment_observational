@@ -72,7 +72,13 @@ bef.sim <- function(lsp = c(5, 10, 15, 20, 25),
   )
   
   # calculate the number of patches
-  patches <- reps*length(lsp)
+  if (lsp.type == "disp.lim") {
+    patches <- reps*length(lsp)
+  } else if(lsp.type == "comp.equal" | lsp.type == "no.disp.lim") {
+    patches <- reps
+  } else {
+    stop("error: specify parameter for lsp.type" )
+  }
   
   # generate matrix of competition coefficients
   alpha <- matrix(truncnorm::rtruncnorm(n = rsp*rsp, a = a_min, b = a_max, mean = a_mean, sd = a_sd), rsp, rsp)
@@ -220,28 +226,6 @@ bef.sim <- function(lsp = c(5, 10, 15, 20, 25),
   return(sim.proc)
   
 }
-
-# test this function with limited time-steps
-df.out <- 
-  bef.sim(lsp = c(30),
-        lsp.type = "comp.equal",
-        reps = 50,
-        rsp = 50,
-        t_steps = 500,
-        rmax = 5, sd.op = 0.25,
-        n0 = 0.5,
-        sim.comp = "sym",
-        a_mean = 0.5, a_sd = 0.2, a_min = 0, a_max = 1, a_spp = 1,
-        het.hom = "hom",
-        ext.thresh = 0.2)
-
-ggplot(data = df.out,
-       mapping = aes(x = richness, y = functioning)) +
-  geom_jitter() +
-  geom_smooth(method = "lm") +
-  theme_bw()
-
-
 
 
 
