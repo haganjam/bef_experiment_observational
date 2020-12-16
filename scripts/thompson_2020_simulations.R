@@ -9,7 +9,7 @@ library(ggplot2)
 
 # set the source of the bef.sim function
 source(here("scripts/thompson_2020_model.R"))
-
+source(here("scripts/function_plotting_theme.R"))
 
 # sim1: homogeneous environmental conditions
 sim.pars <- 
@@ -17,12 +17,13 @@ sim.pars <-
               a.m = c(0.2, 0.4, 0.6, 0.8, 1),
               min.lsp = c(5),
               max.lsp = c(30),
-              disp = c("comp.equal", "disp.lim"))
+              disp = c("comp.equal", "disp.lim"),
+              env.con = c("hom", "het"))
 
 # add how many replicate patches per species pool in the model
 sim.pars <- 
    sim.pars %>%
-   mutate(n.r = if_else(disp == "comp.equal", 50, 10))
+   mutate(n.r = if_else(disp == "comp.equal", 60, 10))
 
 # add an id column
 sim.pars$id <- as.character(1:nrow(sim.pars))
@@ -42,7 +43,7 @@ for(i in 1:nrow(sim.pars)) {
             n0 = 0.5,
             sim.comp = "sym",
             a_mean = sim.pars[i, ]$a.m, a_sd = 0.2, a_min = 0, a_max = 1.2, a_spp = 1,
-            het.hom = "hom",
+            het.hom = sim.pars[i, ]$env.con,
             ext.thresh = 0.2)
    
    z$id <- sim.pars[i, ]$id 
@@ -51,25 +52,35 @@ for(i in 1:nrow(sim.pars)) {
   
 }
 
+
 # join the dataframes
 mod.out <- full_join(bind_rows(sim.out, .id = "id"), sim.pars, by = "id")
 
+# write this into a csv file
+
+# axis labels
+x1 <- c("realised diversity")
+x2 <- c("local species pool diversity")
+y1 <- c("ecosystem function")
+
+# scenario 1: disp.lim, homogeneous environment
+
 # plot out disp.lim
 mod.out %>%
-   filter(disp == "disp.lim") %>%
+   filter(disp == "disp.lim", env.con == "hom") %>%
    ggplot(data = .,
           mapping = aes(x = local.sp.pool, y = functioning, group = id, colour = a.m)) +
-   geom_jitter(width = 0.5, alpha = 0.1) +
+   geom_jitter(width = 0.5, alpha = 0.01) +
    geom_smooth(method = "lm", se = FALSE, size = 0.5) +
    scale_colour_viridis_c() +
    theme_bw() +
    theme(legend.position = "bottom")
 
 mod.out %>%
-   filter(disp == "disp.lim") %>%
+   filter(disp == "disp.lim", env.con == "het") %>%
    ggplot(data = .,
           mapping = aes(x = richness, y = functioning, group = id, colour = a.m)) +
-   geom_jitter(width = 0.2, alpha = 0.1) +
+   geom_jitter(width = 0.2, alpha = 0.01) +
    geom_smooth(method = "lm", se = FALSE, size = 0.5) +
    scale_colour_viridis_c() +
    theme_bw() +
@@ -77,7 +88,7 @@ mod.out %>%
 
 # plot out comp.equal
 mod.out %>%
-   filter(disp == "comp.equal") %>%
+   filter(disp == "comp.equal", env.con == "hom") %>%
    ggplot(data = .,
           mapping = aes(x = richness, y = functioning, group = id, colour = a.m)) +
    geom_jitter(width = 0.2, alpha = 0.01) +
@@ -87,7 +98,7 @@ mod.out %>%
    theme(legend.position = "bottom")
 
 # subset out these data
-c.e <- filter(mod.out, disp == "comp.equal")
+c.e <- filter(mod.out, disp == "comp.equal", env.con == "hom")
 
 est <- sapply(split(c.e, c.e$id), function(x) {
  
@@ -101,7 +112,6 @@ est <- sapply(split(c.e, c.e$id), function(x) {
 }
 )
 hist(est)
-
 
 
 

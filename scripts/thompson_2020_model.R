@@ -223,12 +223,14 @@ bef.sim <- function(lsp = c(5, 10, 15, 20, 25),
   # join these data.frames together
   sim.proc <- full_join(bef.func, lsp.patch, by = "patch")
   
+  # add a column for the environment
+  sim.proc <- full_join(sim.proc, data.frame(patch = as.character(1:patches), 
+                                             env = env.p),
+                        by = "patch")
+  
   return(sim.proc)
   
 }
-
-
-
 
 
 
