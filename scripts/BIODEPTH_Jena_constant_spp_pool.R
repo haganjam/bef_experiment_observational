@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: BIODEPTH data reanalysis when species pool is (almost) constant
+# Title: Prepare the BIODEPTH and Jena data
 
 # load relevant libraries
 library(readr)
@@ -12,16 +12,8 @@ library(viridis)
 library(here)
 library(vegan)
 
-# make a folder to export figures
-if(! dir.exists(here("figures"))){
-  dir.create(here("figures"))
-}
 
-# where to access functions from
-source(here("scripts/function_plotting_theme.R"))
-
-
-# BIODEPTH data: constant species pool
+# BIODEPTH data
 
 # load the BIODEPTH observed species richness data
 bio_d_real <- read_tsv(here("data/Observed.Species.Richness.txt"))
@@ -40,30 +32,23 @@ bio_d <-
                    year, plot, location, block, species.richness, biomass),
             by = c("year", "plot", "location", "block", "species.richness"))
 
-
-# subset out the constant species pool locations
-
-# minimal species pool variation among highest diversity treatments
-
-# greece (location = 4)
-# sweden (location = 6)
-# portugal (location = 2)
-
-# unclear how much species pool variation there is among highest diversity treatments
-
-# ireland (location = 5)
-# sheffield (location = 7)
-
+# subset out the final year of each experiment
 bio_con <- 
   bio_d %>%
-  filter(location %in% c(4, 6, 2)) %>%
   group_by(location) %>%
-  filter(species.richness == max(species.richness)) %>%
   filter(year == last(year)) %>%
   ungroup()
 
+# rename the experiments and make it a factor
+site_names <- 
+  c("DEU", "PRT", "CHE", "GRC",
+    "IRL", "SWE", "Shef.", "Silw.")
 
-# Jena data: constant species pool
+bio_con$location <- as.factor(bio_con$location)
+levels(bio_con$location) <- site_names
+
+
+# Jena data
 
 # load the Jena biomass data
 jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
@@ -150,33 +135,53 @@ site_bio <-
   mutate(comm_biomass = rowSums(sp_bio),
          observed_sr = rowSums(decostand(sp_bio, method = "pa")) )
 
-
-# subset out the 60 species treatment (i.e. constant species pool)
-site_con <- 
-  site_bio %>%
-  filter(sowndiv == 60)
-
 # take the final time-point
-site_con <- 
-  filter(site_con, time == max(time))
+site_bio <-
+  site_bio %>%
+  filter(time == max(time))
 
 
-# BIODEPTH: plot out the results
-ggplot(data = bio_con,
-       mapping = aes(x = species.observed, y = biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~location, scales = "free") +
-  theme_meta()
+# merge the BIODEPTH and Jena data
+names(site_bio)
 
-# Jena: plot out the results
-ggplot(data = site_con,
-       mapping = aes(x = observed_sr, y = comm_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  theme_meta()
+# create a location variable for the Jena experiment
+site_bio$location <- "Jena"
 
-cor(site_con$observed_sr, site_con$comm_biomass)
+# select variables and rename columns from each data.frame
+var.names <- c("location", "plot", "time", "sown.diversity", "realised.diversity", "biomass")
+
+site_bio <- 
+  site_bio %>%
+  select(location, plotcode, time, sowndiv, observed_sr, comm_biomass)
+
+bio_con <- 
+  bio_con %>%
+  select(location, plot, year, species.richness, species.observed, biomass)
+
+names(site_bio) <- var.names
+names(bio_con) <- var.names
+
+# stick the Jena data onto the bottom of the BIODEPTH data
+exp.dat <- bind_rows(bio_con, site_bio)
+
+# check for missing data
+exp.dat %>%
+  filter_all(any_vars(is.na(.)) )
+
+# remove the datapoints with missing data
+exp.dat <- 
+  exp.dat %>%
+  filter_all(all_vars(!is.na(.)))
+
+# remove the monoculture data
+exp.dat <- 
+  exp.dat %>%
+  filter(sown.diversity > 1)
+
+# write a csv of this
+write_csv(x = exp.dat, file = here("analysis_data/bio_exp_dat.csv"))
+
+
 
 
 
