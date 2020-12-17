@@ -22,7 +22,7 @@ sim.pars <-
 # add how many replicate patches per species pool in the model
 sim.pars <- 
    sim.pars %>%
-   mutate(n.r = if_else(disp == "comp.equal", 60, 10))
+   mutate(n.r = if_else(disp == "comp.equal", 50, 10))
 
 # add an id column
 sim.pars$id <- as.character(1:nrow(sim.pars))
@@ -98,13 +98,9 @@ x2 <- c("local species pool diversity")
 x3 <- c("realised div. - function est.")
 y1 <- c("ecosystem function")
 
-# put the plotting into a function
-
-# first, we generate a competition legend
-
 # interspecific competition legend
 x <- 
-   sc.1 %>%
+   mod.plot %>% filter(disp == "disp.lim", env.con == "hom") %>%
    rename(`interspecific competition` = a.m) %>%
    ggplot(data = .,
           mapping = aes(x = richness, y = functioning, group = id, colour = `interspecific competition`)) +
@@ -118,22 +114,22 @@ x <-
                                   barheight = 0.5)) +
    theme_meta() +
    theme(legend.direction="horizontal",
-         legend.justification=c(1, 0), 
+         #legend.justification=c(1, 0), 
          legend.key.width=unit(1, "lines"), 
          legend.key.height=unit(1, "lines"),
          # plot.margin = unit(c(3, 1, 0.5, 0.5), "lines"),
          legend.text = element_text(size = 10),
          legend.title = element_text(size = 10))
-
 ic.l <- gglegend(x)
 
-sim.plot <- function(p.dat, x.min, y.max) {
-   
+# scenario 1 and 3
+sim.plot.sc.1.3 <- 
+   function(p.dat, x.min, y.max) {
    p1 <- 
       ggplot(data = p.dat ,
              mapping = aes(x = local.sp.pool, y = functioning, group = id, colour = a.m)) +
-      geom_jitter(width = 0.5, alpha = 0.1) +
-      geom_smooth(method = "lm", se = FALSE, size = 0.1) +
+      geom_jitter(width = 0.5, alpha = 0.05) +
+      geom_smooth(method = "lm", se = FALSE, size = 0.01, , alpha = 0.1) +
       xlab(x2) +
       ylab(y1) +
       scale_colour_viridis_c(option = "C", begin = 0, end = 0.9) +
@@ -147,8 +143,7 @@ sim.plot <- function(p.dat, x.min, y.max) {
       ungroup() %>%
       ggplot(data = .,
              mapping = aes(x = slope)) +
-      geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C"),
-                     colour = "black") +
+      geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C")) +
       geom_vline(xintercept = 0, colour = "red", linetype = "dashed") +
       scale_colour_viridis_d(option = "C") +
       xlab(x3) +
@@ -162,8 +157,8 @@ sim.plot <- function(p.dat, x.min, y.max) {
    p2 <- 
       ggplot(data = p.dat,
              mapping = aes(x = richness, y = functioning, group = id, colour = a.m)) +
-      geom_jitter(width = 0.5, alpha = 0.1) +
-      geom_smooth(method = "lm", se = FALSE, size = 0.1) +
+      geom_jitter(width = 0.5, alpha = 0.05) +
+      geom_smooth(method = "lm", se = FALSE, size = 0.01, alpha = 0.1) +
       xlab(x1) +
       ylab(y1) +
       scale_colour_viridis_c(option = "C", begin = 0, end = 0.9) +
@@ -172,51 +167,82 @@ sim.plot <- function(p.dat, x.min, y.max) {
       annotation_custom(grob = ggplotGrob(p.inset), 
                         xmin = x.min, xmax = Inf, ymin=-Inf, ymax=y.max)
    
-   p.t <- 
-      ggarrange(p1, p2, ic.l, nrow = 3, ncol = 1,
-             labels = c("b", "d", "f"),
-             font.label = list(size = 12, color = "black", face = "plain", family = NULL),
-             heights = c(1, 1, 0.2))
+
+      p.t <- 
+         ggarrange(p1, p2, ic.l, nrow = 3, ncol = 1,
+                   labels = c("a", "b", ""),
+                   font.label = list(size = 12, color = "black", face = "plain", family = NULL),
+                   heights = c(1, 1, 0.2))
+      
+      return(p.t)
    
-   return(p.t)
-   
-}
-
-sim.plot(p.dat = filter(mod.plot, disp == "comp.equal", env.con == "hom"),
-         x.min = 5, y.max = 5)
-
-
-
-
-
-
-
-# plot out comp.equal
-mod.out %>%
-   filter(disp == "comp.equal", env.con == "hom") %>%
-   ggplot(data = .,
-          mapping = aes(x = richness, y = functioning, group = id, colour = a.m)) +
-   geom_jitter(width = 0.2, alpha = 0.01) +
-   geom_smooth(method = "lm", se = FALSE, size = 0.5) +
-   scale_colour_viridis_c() +
-   theme_bw() +
-   theme(legend.position = "bottom")
-
-# subset out these data
-c.e <- filter(mod.out, disp == "comp.equal", env.con == "hom")
-
-est <- sapply(split(c.e, c.e$id), function(x) {
- 
-   x1 <- x$richness
-   y1 <- x$functioning
-   
-   lm1 <- lm(scale(y1)[,1] ~ scale(x1)[,1] )
-   
-   return(as.numeric(lm1$coefficients[2]))
    
 }
-)
-hist(est)
+
+# scenario 1
+f.sc1 <- 
+   sim.plot.sc.1.3(p.dat = filter(mod.plot, disp == "disp.lim", env.con == "hom"),
+            x.min = 5.5, y.max = 7)
+f.sc1
+
+# scenario 3
+f.sc3 <- 
+   sim.plot.sc.1.3(p.dat = filter(mod.plot, disp == "disp.lim", env.con == "het"),
+            x.min = 5.5, y.max = 7)
+f.sc3
+
+
+# scenario 2 and 4
+sim.plot.sc.2.4 <- 
+   function(p.dat) {
+      
+      p.h <- 
+         p.dat %>%
+         group_by(id) %>%
+         filter(patch == first(patch)) %>%
+         ungroup() %>%
+         ggplot(data = .,
+                mapping = aes(x = slope)) +
+         geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C")) +
+         geom_vline(xintercept = 0, colour = "red", linetype = "dashed") +
+         scale_colour_viridis_d(option = "C") +
+         xlab(x3) +
+         ylab(NULL) +
+         theme_meta()
+      
+      p2 <- 
+         ggplot(data = p.dat,
+                mapping = aes(x = richness, y = functioning, group = id, colour = a.m)) +
+         geom_jitter(width = 0.5, alpha = 0.1) +
+         geom_smooth(method = "lm", se = FALSE, size = 0.1) +
+         xlab(x1) +
+         ylab(y1) +
+         scale_colour_viridis_c(option = "C", begin = 0, end = 0.9) +
+         theme_meta() +
+         theme(legend.position = "none")
+      
+      
+      p.t <- 
+         ggarrange(p2, p.h, nrow = 1, ncol = 2,
+                   labels = c("a", "b"),
+                   font.label = list(size = 12, color = "black", face = "plain", family = NULL),
+                   widths = c(1.5, 1))
+      
+      return(p.t)
+      
+      
+   }
+
+# scenario 2
+f.sc2 <- 
+   sim.plot.sc.2.4(p.dat = filter(mod.plot, disp == "comp.equal", env.con == "hom"))
+f.sc2
+
+# scenario 4
+f.sc4 <- 
+   sim.plot.sc.2.4(p.dat = filter(mod.plot, disp == "comp.equal", env.con == "het"))
+f.sc4
+
 
 
 
