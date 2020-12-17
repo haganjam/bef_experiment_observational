@@ -57,7 +57,7 @@ ic.l <- gglegend(x)
 
 # scenario 1 and 3
 sim.plot.sc.1.3 <- 
-  function(p.dat, x.min, y.max) {
+  function(p.dat) {
     p1 <- 
       ggplot(data = p.dat ,
              mapping = aes(x = local.sp.pool, y = functioning, group = id, colour = a.m)) +
@@ -69,24 +69,6 @@ sim.plot.sc.1.3 <-
       theme_meta() +
       theme(legend.position = "none")
     
-    p.inset <- 
-      p.dat %>%
-      group_by(id) %>%
-      filter(patch == first(patch)) %>%
-      ungroup() %>%
-      ggplot(data = .,
-             mapping = aes(x = slope)) +
-      geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C")) +
-      geom_vline(xintercept = 0, colour = "red", linetype = "dashed") +
-      scale_colour_viridis_d(option = "C") +
-      xlab(x3) +
-      ylab(NULL) +
-      theme_meta() +
-      theme(axis.title.x = element_text(size = 8, face = "plain"),
-            axis.title.y = element_text(size = 8, face = "plain"),
-            axis.text.x = element_text(size = 8, face = "plain"),
-            axis.text.y = element_text(size = 8, face = "plain"))
-    
     p2 <- 
       ggplot(data = p.dat,
              mapping = aes(x = richness, y = functioning, group = id, colour = a.m)) +
@@ -96,9 +78,7 @@ sim.plot.sc.1.3 <-
       ylab(y1) +
       scale_colour_viridis_c(option = "C", begin = 0, end = 0.9) +
       theme_meta() +
-      theme(legend.position = "none") +
-      annotation_custom(grob = ggplotGrob(p.inset), 
-                        xmin = x.min, xmax = Inf, ymin=-Inf, ymax=y.max)
+      theme(legend.position = "none")
     
     
     p.t <- 
@@ -114,14 +94,12 @@ sim.plot.sc.1.3 <-
 
 # scenario 1
 f.sc1 <- 
-  sim.plot.sc.1.3(p.dat = filter(mod.plot, disp == "disp.lim", env.con == "hom"),
-                  x.min = 5.5, y.max = 7)
+  sim.plot.sc.1.3(p.dat = filter(mod.plot, disp == "disp.lim", env.con == "hom"))
 f.sc1
 
 # scenario 3
 f.sc3 <- 
-  sim.plot.sc.1.3(p.dat = filter(mod.plot, disp == "disp.lim", env.con == "het"),
-                  x.min = 5.5, y.max = 7)
+  sim.plot.sc.1.3(p.dat = filter(mod.plot, disp == "disp.lim", env.con == "het"))
 f.sc3
 
 
@@ -152,17 +130,18 @@ sim.plot.sc.2.4 <-
       ylab(y1) +
       scale_colour_viridis_c(option = "C", begin = 0, end = 0.9) +
       theme_meta() +
-      theme(legend.position = "none")
+      theme(legend.position = "none") +
+      theme(axis.title.y = element_text(colour = "black", size = 10, face = "plain", margin=margin(0,20,0,0,"pt")))
     
     
     p.t <- 
       ggarrange(p2, p.h, nrow = 1, ncol = 2,
                 labels = c("a", "b"),
                 font.label = list(size = 12, color = "black", face = "plain", family = NULL),
-                widths = c(1.5, 1))
+                widths = c(1.3, 1),
+                heights = c(1, 0.2))
     
     return(p.t)
-    
     
   }
 
@@ -182,9 +161,26 @@ f.sc4
 # load the data
 exp.dat <- read_csv(file = "analysis_data/bio_exp_dat.csv")
 
+# plot an experiment legend
+y <- 
+  ggplot(data = exp.dat,
+       mapping = aes(x = sown.diversity, y = biomass, fill = location, colour = location) ) +
+  geom_point() +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  guides(fill = guide_legend(nrow=2,byrow=TRUE)) +
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank(),
+        legend.title = element_blank(),
+        legend.key.size = unit(0.6,"line"),
+        legend.text = element_text(size = 9))
+
+y.l <- gglegend(y)
+
 
 # scenario 1
-ggplot(data = exp.dat,
+exp.sc1.a <- 
+  ggplot(data = exp.dat,
        mapping = aes(x = sown.diversity, y = biomass, colour = location)) +
   geom_jitter(width = 0.5, alpha = 0.8) +
   geom_smooth(method = "lm", se = FALSE, size = 0.5) +
@@ -194,9 +190,9 @@ ggplot(data = exp.dat,
   theme_meta() +
   theme(legend.position = "none")
 
-
-ggplot(data = exp.dat,
-       mapping = aes(x = realised.diversity, y = biomass, colour = location)) +
+exp.sc1.b <- 
+  ggplot(data = exp.dat,
+         mapping = aes(x = realised.diversity, y = biomass, colour = location)) +
   geom_jitter(width = 0.5, alpha = 0.8) +
   geom_smooth(method = "lm", se = FALSE, size = 0.5) +
   xlab(x1) +
@@ -204,6 +200,12 @@ ggplot(data = exp.dat,
   scale_colour_viridis_d(option = "C", begin = 0, end = 0.9) +
   theme_meta() +
   theme(legend.position = "none")
+
+exp.sc1.f <- 
+  ggarrange(exp.sc1.a, exp.sc1.b, y.l, nrow = 3, ncol = 1,
+          labels = c("c", "d"),
+          font.label = list(size = 12, color = "black", face = "plain", family = NULL),
+          heights = c(1, 1, 0.2))
 
 
 # scenario 2
@@ -215,7 +217,8 @@ sc.2.exp.dat <-
   mutate(loc.sown.div = paste(location, sown.diversity, sep = "."))
 
 
-ggplot(data = sc.2.exp.dat,
+exp.sc2.a <- 
+  ggplot(data = sc.2.exp.dat,
        mapping = aes(x = realised.diversity, y = biomass, group = loc.sown.div,
                      colour = location, size = sown.diversity)) +
   geom_jitter(width = 0.5, alpha = 0.8) +
@@ -241,13 +244,40 @@ est.sc.2 <-
   }
   )
 
-ggplot(mapping = aes(x = est.sc.2)) +
+exp.sc2.b <- 
+  ggplot(mapping = aes(x = est.sc.2)) +
   geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C")) +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed") +
   scale_colour_viridis_d(option = "C") +
   xlab(x3) +
   ylab(NULL) +
   theme_meta()
+
+exp.sc2.f <- 
+  ggarrange(exp.sc2.a, exp.sc2.b, nrow = 1, ncol = 2,
+          labels = c("c", "d", ""),
+          font.label = list(size = 12, color = "black", face = "plain", family = NULL),
+          widths = c(1.3, 1),
+          heights = c(1, 0.2))
+
+
+### fig. 3: scenario 1
+fig.3 <- 
+  ggarrange(f.sc1, exp.sc1.f, nrow = 1, ncol = 2,
+            labels = NULL, widths = c(0.9, 1))
+fig.3
+
+ggsave(filename = here("figures/ms_fig_3.pdf"), 
+       plot = fig.3, width = 15, height = 13, units = "cm")
+
+### fig. 4: scenario 2
+fig.4 <- 
+  ggarrange(f.sc2, exp.sc2.f, nrow = 2, ncol = 1,
+            labels = NULL, widths = c(1, 1))
+fig.4
+
+ggsave(filename = here("figures/ms_fig_4.pdf"), 
+       plot = fig.4, width = 15, height = 13, units = "cm")
 
 
 
