@@ -3,8 +3,14 @@
 
 # Title: run the Thompson model for a given set of parameters
 
+# load the relevant libraries
 library(here)
 library(dplyr)
+
+# make a folder to export the simulation data
+if(! dir.exists(here("analysis_data"))){
+   dir.create(here("analysis_data"))
+}
 
 # set the source of the bef.sim function
 source(here("scripts/thompson_2020_model.R"))

@@ -149,52 +149,7 @@ ggsave(filename = here("figures/box1_fig1.pdf"),
 
 
 
-# do this for the BIODEPTH data as well to show that it is consistent
 
-# load in the biodepth data
-biod1 <- read_delim(here("data/biodepth_analysis_data_1.csv"), delim = ",")
-biod2 <- read_delim(here("data/biodepth_analysis_data_2.csv"), delim = ",")
-biod3 <- read_delim(here("data/biodepth_analysis_data_3.csv"), delim = ",")
-biod4 <- read_delim(here("data/biodepth_analysis_data_4.csv"), delim = ",")
-biod5 <- read_delim(here("data/biodepth_analysis_data_5.csv"), delim = ",")
-biod6 <- read_delim(here("data/biodepth_analysis_data_6.csv"), delim = ",")
-biod7 <- read_delim(here("data/biodepth_analysis_data_7.csv"), delim = ",")
-biod8 <- read_delim(here("data/biodepth_analysis_data_8.csv"), delim = ",")
-
-# combines these datasets into a list
-data_bio <- 
-  list(biod1, biod2, biod3, biod4,
-       biod5, biod6, biod7, biod8)
-
-# bind this into a single dataframe
-data_bio <- bind_rows(data_bio, .id = "exp.")
-
-# plot the realised diversity function relationship for each experiment in BIODEPTH
-bio_names <- 
-  c("Germany", "Portugal", "Switzerland", "Greece",
-    "Ireland", "Sweden", "Sheffield", "Silwood")
-
-data_bio$exp. <- as.factor(data_bio$exp.)
-levels(data_bio$exp.) <- bio_names
-
-data_bio <- 
-  data_bio %>%
-  mutate(species_pool = as.character(species_pool))
-
-ggplot(data = data_bio,
-       mapping = aes(x = realised_richness, 
-                     y = community_biomass,
-                     colour = species_pool)) +
-  geom_jitter(width = 0.1, size = 1.5) +
-  geom_smooth(method = "lm", size = 0.75, se = FALSE) +
-  ylab("community biomass") +
-  xlab("realised diversity") +
-  labs(colour = "initial diversity") +
-  scale_colour_viridis_d(option = "C", end = 0.9) +
-  facet_wrap(~exp., scales = "free") +
-  theme_meta() +
-  theme(legend.position = "bottom",
-        legend.key = element_blank())
 
 
 
