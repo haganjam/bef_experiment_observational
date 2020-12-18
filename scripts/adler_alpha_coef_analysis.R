@@ -12,14 +12,14 @@ library(viridis)
 library(here)
 
 # load in the data
-ad.dat <- read_csv(here("data/CompetitionRegressionData071517.csv") )
-spec(ad.dat)
+ad.dat.raw <- read_csv(here("raw_data/CompetitionRegressionData071517.csv") )
+spec(ad.dat.raw)
 
-View(ad.dat)
+View(ad.dat.raw)
 
 # select relevant columns
 ad.dat <- 
-  ad.dat %>%
+  ad.dat.raw %>%
   select(`Paper Key #`, Focal.Species, Comp.Species, 
          `competition coefficient`, `Negative coefs mean competition`)
 
@@ -39,10 +39,16 @@ ad.dat <-
 
 summary(ad.dat)
 
+# examine these extreme values
+ad.dat.raw %>%
+  filter(`competition coefficient` > 5 | `competition coefficient` < -5) %>%
+  View()
+
 # get rid of the very extreme values
 ad.dat <- 
   ad.dat %>%
-  filter(`competition coefficient` < 5, `competition coefficient` > -5)
+  filter(`competition coefficient` < 1) %>%
+  filter(`competition coefficient` > -1)
 
 # check the summary statistics
 ad.dat %>%
@@ -50,8 +56,8 @@ ad.dat %>%
   summarise(mean.a = mean(`competition coefficient`, na.rm = TRUE))
 
 # plot the distribution of competition coefficients for intra vs. inter species
-ggplot(data = ad.dat,
-       mapping = aes(x = `competition coefficient`, colour = intra.inter, fill = intra.inter)) +
+ggplot(data = ad.dat %>% filter(intra.inter == "inter"),
+       mapping = aes(x = `competition coefficient`)) +
   geom_density(alpha = 0.2) +
   geom_vline(xintercept = 0) +
   theme_bw()
