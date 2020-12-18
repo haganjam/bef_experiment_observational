@@ -7,13 +7,8 @@
 library(readr)
 library(dplyr)
 library(tidyr)
-library(purrr)
-library(ggplot2)
-library(broom)
-library(viridis)
 library(here)
-library(vegan)
-library(ggpubr)
+
 
 # make a folder to export figures
 if(! dir.exists(here("figures"))){
@@ -151,17 +146,16 @@ sub_names <-
   names(vand_dat_c)[c(3, 4, 5, 6, 7, 8, 9, 11, 12, 30, 13, 14, 15, 16, 17, 18, 19, 29)]
 
 # export a file to fill in with the spatial grain information
-
-# vand_dat_c %>%
-  # select(sub_names) %>%
-  # mutate(min_lat = c("."),
-         # max_lat = c("."),
-         # min_lon = c("."),
-         # max_lon = c("."),
-         # spatial_grain = c("."),
-         # spatial_extent = c("."),
-         # grain_extent_notes = c(".")) %>%
-  # write_csv(., path = here("data/van_der_Plas_review_spatial_grains.csv"))
+vand_dat_c %>%
+  select(sub_names) %>%
+  mutate(min_lat = c("."),
+         max_lat = c("."),
+         min_lon = c("."),
+         max_lon = c("."),
+         spatial_grain = c("."),
+         spatial_extent = c("."),
+         grain_extent_notes = c(".")) %>%
+  write_csv(., path = here("data/van_der_Plas_review_spatial_grains.csv"))
 
 # this exported file has duplicates for some bef-slopes
 # these were removed while filling in the data

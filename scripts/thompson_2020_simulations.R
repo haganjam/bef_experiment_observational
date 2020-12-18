@@ -18,8 +18,8 @@ source(here("scripts/function_plotting_theme.R"))
 
 # sim1: homogeneous environmental conditions
 sim.pars <- 
-  expand.grid(replicate = c(1:10),
-              a.m = c(0.2, 0.4, 0.6, 0.8, 1),
+  expand.grid(replicate = c(1:5),
+              a.m = c(0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75),
               min.lsp = c(5),
               max.lsp = c(30),
               disp = c("comp.equal", "disp.lim"),

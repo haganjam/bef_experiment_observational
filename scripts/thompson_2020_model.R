@@ -81,7 +81,10 @@ bef.sim <- function(lsp = c(5, 10, 15, 20, 25),
   }
   
   # generate matrix of competition coefficients
-  alpha <- matrix(truncnorm::rtruncnorm(n = rsp*rsp, a = a_min, b = a_max, mean = a_mean, sd = a_sd), rsp, rsp)
+  alpha <- matrix(truncnorm::rtruncnorm(n = rsp*rsp, 
+                                        a = a_min, b = a_max, 
+                                        mean = rnorm(n = 1, mean = a_mean, sd = 0.01), 
+                                        sd = a_sd), rsp, rsp)
   
   # make the matrix symmetric if chosen
   if (sim.comp == "sym") {
