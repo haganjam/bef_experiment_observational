@@ -16,10 +16,10 @@ library(vegan)
 # BIODEPTH data
 
 # load the BIODEPTH observed species richness data
-bio_d_real <- read_tsv(here("data/Observed.Species.Richness.txt"))
+bio_d_real <- read_tsv(here("raw_data/Observed.Species.Richness.txt"))
 
 # load the BIODEPTH biomass data (shoot biomass)
-bio_d_bio <- read_tsv(here("data/Shoots.txt"))
+bio_d_bio <- read_tsv(here("raw_data/Shoots.txt"))
 
 # join these data sets together to output the relevant variables
 names(bio_d_real)
@@ -51,7 +51,7 @@ levels(bio_con$location) <- site_names
 # Jena data
 
 # load the Jena biomass data
-jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
+jena_bio <- read_delim(here("raw_data/Jena_Biomass_02-08.csv"), delim = ",")
 head(jena_bio)
 names(jena_bio)
 
