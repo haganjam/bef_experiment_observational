@@ -12,16 +12,16 @@ library(viridis)
 library(here)
 library(vegan)
 
-# make a folder to export figures
-if(! dir.exists(here("figures"))){
-  dir.create(here("figures"))
+# make a folder to export analysis data
+if(! dir.exists(here("analysis_data"))){
+  dir.create(here("analysis_data"))
 }
 
 # where to access functions from
 source(here("scripts/function_plotting_theme.R"))
 
 # load the Jena biomass data
-jena_bio <- read_delim(here("data/Jena_Biomass_02-08.csv"), delim = ",")
+jena_bio <- read_delim(here("raw_data/Jena_Biomass_02-08.csv"), delim = ",")
 head(jena_bio)
 names(jena_bio)
 
@@ -122,24 +122,8 @@ site_bio <-
          realised_richness = observed_sr,
          species_pool = sowndiv)
 
-
-# plot species pool and community biomass
-ggplot(data = site_bio,
-       mapping = aes(x = species_pool, y = community_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_meta()
-  
-# plot realised diversity and community biomass
-ggplot(data = site_bio,
-       mapping = aes(x = realised_richness, y = community_biomass)) +
-  geom_point() +
-  geom_smooth(method = "lm") +
-  theme_meta()
-
 # output this ran_bio dataframe as a .csv file
-write_csv(x = site_bio,
-          path = here("data/jena_analysis_data.csv"))
+write_csv(x = site_bio, file = here("analysis_data/jena_analysis_data.csv"))
 
 
 

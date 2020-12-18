@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Box 1 analysis (model and Jena data)
+# Title: Fig.2 analysis and plots
 
 # load relevant libraries generally
 library(readr)
@@ -20,14 +20,14 @@ if(! dir.exists(here("figures"))){
 source(here("scripts/function_plotting_theme.R"))
 
 # set up axis labels
-l1 <- expression(sqrt(paste("community biomass (g ",  " m"^"-2", ")") ))
-l2 <- c("community biomass")
-l3 <- expression(paste("initial ", alpha, " diversity"))
-l4 <- expression(paste("realised ", alpha, " diversity"))
+l1 <- expression(sqrt(paste("biomass (g ",  " m"^"-2", ")") ))
+l2 <- c("biomass")
+l3 <- c("initial diversity")
+l4 <- c("realised diversity")
 l5 <- c("model")
 
 # load the model data
-mod_dat <- read_delim(here("data/stachova_leps_model_data_full.csv"), delim = ",")
+mod_dat <- read_delim(here("analysis_data/stachova_leps_model_data_full.csv"), delim = ",")
 
 # get the final time point in this model
 mod_dat_t <- 
@@ -70,14 +70,14 @@ ggplot(data = dfx,
 
 # choose the most representative run and then put the rest in the supplementary
 
-# run 6
+# run 5
 
 
 # load the Jena data
-jena_dat <- read_delim(here("data/jena_analysis_data.csv"), delim = ",")
+jena_dat <- read_delim(here("analysis_data/jena_analysis_data.csv"), delim = ",")
 
 # combine these datasets into a list
-box.1_dat <- list(filter(mod_dat_t, run == 6), jena_dat)
+fig.2_dat <- list(filter(mod_dat_t, run == 5), jena_dat)
 
 
 # plot species pool diversity versus function
@@ -86,11 +86,11 @@ box.1_dat <- list(filter(mod_dat_t, run == 6), jena_dat)
 ylabs1 <- 
   list(l2, l1 )
 
-box.1_fab <- vector("list")
-for (i in 1:length(box.1_dat)) {
+fig.2_ab <- vector("list")
+for (i in 1:length(fig.2_dat)) {
   
-  box.1_fab[[i]] <- 
-    ggplot(data = box.1_dat[[i]],
+  fig.2_ab[[i]] <- 
+    ggplot(data = fig.2_dat[[i]],
          mapping = aes(x = species_pool, y = community_biomass)) +
     geom_jitter(width = 0.5, size = 1.5) +
     geom_smooth(method = "lm", size = 0.5, colour = "black", alpha = 0.3) +
@@ -100,17 +100,17 @@ for (i in 1:length(box.1_dat)) {
   
 }
 
-f1 <- 
-  ggpubr::ggarrange(box.1_fab[[1]], box.1_fab[[2]], labels = c("a", "c"),
-            font.label = list(size = 12, color = "black", face = "plain", family = NULL))
+f2.1 <- 
+  ggpubr::ggarrange(fig.2_ab[[1]], fig.2_ab [[2]], labels = c("a", "c"),
+            font.label = list(size = 9, color = "black", face = "plain", family = NULL))
 
 
 # plot realised diversity versus function for each species pool
 
-box.1_fcd <- vector("list")
-for (i in 1:length(box.1_dat)) {
+fig.2_fcd <- vector("list")
+for (i in 1:length(fig.2_dat)) {
   
-  x <- box.1_dat[[i]]
+  x <- fig.2_dat[[i]]
   
   levs <- sort(unique(x$species_pool), decreasing = FALSE)
   
@@ -118,7 +118,7 @@ for (i in 1:length(box.1_dat)) {
     mutate(x, 
            species_pool = factor(as.factor(species_pool), levels = levs )  )
   
-  box.1_fcd[[i]] <- 
+  fig.2_fcd[[i]] <- 
     ggplot(data = z,
            mapping = aes(x = realised_richness, 
                          y = community_biomass,
@@ -131,20 +131,22 @@ for (i in 1:length(box.1_dat)) {
     scale_colour_viridis_d(option = "C", end = 0.9) +
     theme_meta() +
     theme(legend.position = "bottom",
-          legend.key = element_blank())
+          legend.key = element_blank(),
+          legend.title = element_blank(),
+          legend.key.size = unit(0.5,"line"))
   
 }
 
 
-f2 <- ggpubr::ggarrange(box.1_fcd[[1]], box.1_fcd[[2]], labels = c("b", "d"),
-            font.label = list(size = 12, color = "black", face = "plain", family = NULL))
+f2.2 <- ggpubr::ggarrange(fig.2_fcd[[1]], fig.2_fcd[[2]], labels = c("b", "d"),
+            font.label = list(size = 9, color = "black", face = "plain", family = NULL))
 
 # join these two figures together
-fig1 <- ggpubr::ggarrange(f1, f2, ncol = 1, nrow = 2, labels = NULL,
+fig.2 <- ggpubr::ggarrange(f2.1, f2.2, ncol = 1, nrow = 2, labels = NULL,
                   heights = c(1, 1.25))
 
-ggsave(filename = here("figures/box1_fig1.pdf"), 
-       plot = fig1, width = 17.3, height = 16, units = "cm",
+ggsave(filename = here("figures/fig_2.pdf"), 
+       plot = fig.2, width = 11, height = 11, units = "cm",
        dpi = 450)
 
 

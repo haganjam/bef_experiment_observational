@@ -11,9 +11,9 @@ library(ggplot2)
 library(viridis)
 library(here)
 
-# make a folder to export figures
-if(! dir.exists(here("figures"))){
-  dir.create(here("figures"))
+# make a folder to export the analysis data
+if(! dir.exists(here("analysis_data"))){
+  dir.create(here("analysis_data"))
 }
 
 # where to access functions from
@@ -50,8 +50,7 @@ sl_mod_an <-
   bind_rows(sl_mod_out, .id = "run")
 
 # output this into dataframe as a .csv file
-write_csv(x = sl_mod_an,
-          path = here("data/stachova_leps_model_data_full.csv"))
+write_csv(x = sl_mod_an, file = here("analysis_data/stachova_leps_model_data_full.csv"))
 
 
 
