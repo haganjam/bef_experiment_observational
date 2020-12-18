@@ -140,6 +140,11 @@ site_bio <-
   site_bio %>%
   filter(time == max(time))
 
+# remove the 60 species treatment because this is a positive control
+site_bio <- 
+  site_bio %>%
+  filter(sowndiv < 60)
+
 
 # merge the BIODEPTH and Jena data
 names(site_bio)
