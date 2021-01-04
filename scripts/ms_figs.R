@@ -8,6 +8,8 @@ library(ggplot2)
 library(ggpubr)
 library(viridis)
 library(here)
+library(readr)
+library(dplyr)
 
 # make a folder to export figures
 if(! dir.exists(here("figures"))){
@@ -160,6 +162,12 @@ f.sc4.s <-
 # load the data
 exp.dat <- read_csv(file = "analysis_data/bio_exp_dat.csv")
 
+# remove the Jena data
+exp.dat <- 
+  exp.dat %>%
+  filter(location != "Jena")
+
+
 # plot an experiment legend
 y <- 
   ggplot(data = exp.dat,
@@ -202,8 +210,8 @@ f.sc1.exp.2 <-
   theme(legend.position = "none")
 
 f.sc1.exp <- 
-  ggarrange(f.sc1.exp.1, f.sc1.exp.2, exp.l, nrow = 3, ncol = 1,
-          labels = c("c", "d"),
+  ggarrange(f.sc1.exp.1, f.sc1.exp.2, nrow = 1, ncol = 2,
+          labels = c("a", "b"),
           font.label = list(size = 9, color = "black", face = "plain", family = NULL),
           heights = c(1, 1, 0.2))
 
@@ -257,10 +265,20 @@ f.sc2.exp.2 <-
 
 f.sc2.exp <- 
   ggarrange(f.sc2.exp.1, f.sc2.exp.2, exp.l, nrow = 2, ncol = 2,
-          labels = c("c", "d", ""),
+          labels = c("a", "b", ""),
           font.label = list(size = 9, color = "black", face = "plain", family = NULL),
-          widths = c(1.3, 1),
+          widths = c(1, 1),
           heights = c(1, 0.2))
+
+ggsave(filename = here("figures/ms_fig_3.pdf"), 
+       plot = f.sc2.exp, width = 11, height = 6, units = "cm")
+
+
+
+
+ggarrange(f.sc1.s, f.sc2.exp, nrow = 1, ncol = 2,
+          labels = NULL, widths = c(0.9, 1))
+
 
 
 ### fig. 3: scenario 1
