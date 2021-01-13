@@ -13,7 +13,12 @@ library(here)
 library(vegan)
 
 
-# BIODEPTH data
+####################################
+#                                  #
+#         BIODEPTH data            #
+#                                  #
+####################################
+
 
 # load the BIODEPTH observed species richness data
 bio_d_real <- read_tsv(here("raw_data/Observed.Species.Richness.txt"))
@@ -48,7 +53,11 @@ bio_con$location <- as.factor(bio_con$location)
 levels(bio_con$location) <- site_names
 
 
-# Jena data
+####################################
+#                                  #
+#         Jena data                #
+#                                  #
+####################################
 
 # load the Jena biomass data
 jena_bio <- read_delim(here("raw_data/Jena_Biomass_02-08.csv"), delim = ",")
