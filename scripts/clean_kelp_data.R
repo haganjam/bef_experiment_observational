@@ -8,11 +8,7 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(broom)
-library(viridis)
 library(here)
-library(vegan)
-library(ggpubr)
 
 # where to access functions from
 source(here("scripts/function_plotting_theme.R"))
