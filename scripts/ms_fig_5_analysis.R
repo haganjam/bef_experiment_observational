@@ -167,7 +167,7 @@ f.5 <- ggpubr::ggarrange(f.5a, f.5b, ncol = 2, nrow = 1,
                          font.label = list(size = 9, color = "black", face = "plain", family = NULL))
 
 ggsave(filename = here("figures/fig_5.pdf"), 
-       plot = f.5, width = 11, height = 8, units = "cm",
+       plot = f.5, width = 11, height = 7.5, units = "cm",
        dpi = 450)
 
 ### END
