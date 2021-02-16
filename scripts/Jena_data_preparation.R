@@ -21,6 +21,7 @@ if(! dir.exists(here("analysis_data"))){
 source(here("scripts/function_plotting_theme.R"))
 
 # load the Jena biomass data
+# jena_bio <- read_delim(url("https://ndownloader.figshare.com/files/5608847"), delim = ",")
 jena_bio <- read_delim(here("raw_data/Jena_Biomass_02-08.csv"), delim = ",")
 head(jena_bio)
 names(jena_bio)

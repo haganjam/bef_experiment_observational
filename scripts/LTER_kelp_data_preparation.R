@@ -14,6 +14,7 @@ library(here)
 source(here("scripts/function_plotting_theme.R"))
 
 # load the biomass data
+# kelp_raw <- read_csv(url("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-sbc.50.8&entityid=24d18d9ebe4f6e8b94e222840096963c"))
 kelp_raw <- read_csv(here("raw_data/Annual_All_Species_Biomass_at_transect_20200108.csv"))
 
 # check for unique sites
