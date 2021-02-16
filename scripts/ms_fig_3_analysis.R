@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Plot the figures for the manuscript
+# Title: Plot Fig. 3
 
 # load plotting libraries
 library(ggplot2)
@@ -80,8 +80,10 @@ data.sc.12.exp <-
   filter( (max(realised.diversity)-min(realised.diversity)) >= 1 ) %>%
   ungroup()
   
+
+# plot figure 3a
   
-f.sc2.exp.1 <- 
+fig.3a <- 
   ggplot(data = data.sc.12.exp,
        mapping = aes(x = (realised.diversity), y = sqrt(biomass), group = loc.sown.div,
                      colour = location)) +
@@ -94,6 +96,7 @@ f.sc2.exp.1 <-
   theme_meta() + 
   theme(legend.position = "none")
 
+fig.3a
 
 # get the realised diversity - function slopes
 est.sc.2.exp <- 
@@ -109,7 +112,8 @@ est.sc.2.exp <-
   }
   )
 
-f.sc2.exp.2 <- 
+# plot figure 3b
+fig.3b <- 
   ggplot(mapping = aes(x = est.sc.2.exp)) +
   geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C")) +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
@@ -118,19 +122,17 @@ f.sc2.exp.2 <-
   ylab(y3) +
   theme_meta()
 
-f.sc2.exp <- 
-  ggarrange(f.sc2.exp.1, f.sc2.exp.2, exp.l, nrow = 2, ncol = 2,
+fig.3b
+
+# combine figure 3a and 3b
+fig.3 <- 
+  ggarrange(fig.3a, fig.3b, exp.l, nrow = 2, ncol = 2,
           labels = c("a", "b", ""),
           font.label = list(size = 9, color = "black", face = "plain", family = NULL),
           widths = c(1.3, 1),
           heights = c(1, 0.2))
 
-ggsave(filename = here("figures/ms_fig_3.pdf"), 
-       plot = f.sc2.exp, width = 11, height = 7, units = "cm")
+ggsave(filename = here("figures/fig_3.pdf"), 
+       plot = fig.3, width = 11, height = 7, units = "cm")
 
-
-
-
-
-
-
+### END
