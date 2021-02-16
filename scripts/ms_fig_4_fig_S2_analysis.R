@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: van der Plas (2019) systematic review data reanalysis
+# Title: Fig. 4 and Fig. S2 analysis (van der Plas 2019, systematic review data)
 
 # load relevant libraries
 library(readr)
@@ -23,22 +23,22 @@ if(! dir.exists(here("figures"))){
 source(here("scripts/function_plotting_theme.R"))
 
 
-### figure 3 analysis
+# fig. 4
 
 # import the dataset with the spatial extent and grain information filled in
-
 # check whether all relationship numbers were accounted for
 
 # read in the completed data file
-vd_full_raw <- read_delim(here("raw_data/van_der_Plas_2019_spatial_extent_complete.csv"), delim = ",")
+vd_dat <- read_delim(here("raw_data/van_der_Plas_2019_spatial_extent_complete.csv"), delim = ",")
 
 
-### figure 3a
+# figure 4a
 
 # subset out the bef-relationships that were unknown
+# rename bef_relationship entries into signs for plotting
 
 vd_raw <- 
-  vd_full_raw %>%
+  vd_dat %>%
   filter(bef_relationship != "unknown") %>%
   select(`paper number`, Relationship_nr, bef_relationship) %>%
   mutate(direction = if_else( bef_relationship == "Positive", "+",
@@ -46,26 +46,28 @@ vd_raw <-
          bef_relationship = if_else( bef_relationship == "Positive", "positive",
                                      if_else( bef_relationship == "Negative", "negative", "neutral")))
 
+# how many unique papers do the bef relationships come from?
+vd_raw$`paper number` %>%
+  unique() %>%
+  length()
 
-# randomly sample single bef slopes from a paper to avoid non-independence
+# how many papers report multiple bef relationships?
 vd_raw %>%
   group_by(`paper number`) %>%
   summarise(n = n()) %>%
   filter(n > 1) %>%
   nrow()
 
-vd_raw$`paper number` %>%
-  unique() %>%
-  length()
-
+# how many bef relationships are there in total?
 vd_raw$Relationship_nr %>%
   unique() %>%
   length()
 
 # overall there are 246 slopes
-
 # 111 papers and 45 have more than one bef slope
 
+
+# randomly sample single bef slopes from a paper to avoid non-independence
 
 # set the number of replicates
 r <- 1000
@@ -95,13 +97,13 @@ vd_ran <-
 
 
 # get proportions in the observed data
-
 vd_obs <- 
   vd_raw %>%
   group_by(bef_relationship, direction) %>%
   summarise(n = n(), .groups = "drop") %>%
   mutate(proportion = n/sum(n, na.rm = TRUE))
 
+# get range of proportions in the randomised data
 vd_range <- 
   vd_ran %>%
   group_by(bef_relationship, direction) %>%
@@ -113,8 +115,9 @@ sim_dat <-
   full_join(vd_obs,
             select(vd_range, bef_relationship, min_prop, max_prop),
             by = "bef_relationship")
-  
-d1 <- 
+
+
+fig.4a <- 
   ggplot(data = sim_dat,
          mapping = aes(x = bef_relationship, y = proportion, fill = bef_relationship)) +
   geom_bar(stat = "identity", width = 0.2, colour = "white") +
@@ -128,10 +131,11 @@ d1 <-
   theme_meta() +
   theme(legend.position = "none")
 
-d1
+# check fig. 4a
+fig.4a
 
 
-### figure 3b
+# figure 4b and figure s2
 
 # check the spatial extent data
 
@@ -140,43 +144,47 @@ d1
 # correct a mistake in the landscape classification
 
 vd2_raw <- 
-  vd_full_raw %>%
+  vd_dat %>%
   filter(include == "yes") %>%
   mutate(bef_relationship = if_else( bef_relationship == "Positive", "positive",
                                      if_else( bef_relationship == "Negative", "negative", "neutral")),
          spatial_extent = if_else(spatial_extent == "landscape ", "landscape", spatial_extent))
 
+# how many papers are the bef relationships from with spatial extent information?
 vd2_raw$`paper number` %>%
   unique() %>%
   length()
 
+# how many of these reported multiple bef relationships
 vd2_raw %>%
   group_by(`paper number`) %>%
   summarise(n = n()) %>%
   filter(n > 1) %>%
   nrow()
 
+# how many bef relationships in total were there?
 vd2_raw$Relationship_nr %>%
   unique() %>%
   length()
 
+# how many bef relationships per spatial extent?
 vd2_raw %>%
   group_by(spatial_extent) %>%
   summarise(n = n())
 
 
-
 # we obtained information on spatial extent for 231 relationships
-
 # this came from 106 papers and 42 of those had multiple bef slopes associated with it
 
+# test how robust our spatial classification is:
 
 # does the classification represent spatial extent?
 spat_clas <- 
   vd2_raw %>%
   mutate(lat_diff = (max_lat - min_lat),
-         lon_diff = (max_lon -min_lon))
+         lon_diff = (max_lon - min_lon))
 
+# examine anomalous values
 # check the high landscape spatial extent values
 spat_clas %>%
   filter(spatial_extent == "landscape",
@@ -211,23 +219,29 @@ vd2_raw$spatial_extent <-
   factor(vd2_raw$spatial_extent, levels = c("landscape", "regional", "continental", "global"))
 
 
-### figure s2
+# plot figure S2
 
 fig_s2_dat <- 
   vd2_raw %>%
   mutate(lat_diff = (max_lat - min_lat),
-         lon_diff = (max_lon -min_lon))
+         lon_diff = (max_lon - min_lon))
 
-fig_s2 <- 
+fig.s2 <- 
   ggplot(data = rename(fig_s2_dat, `spatial extent` = spatial_extent),
          mapping = aes(x = log(1 + lon_diff), y = log(1 + lat_diff), 
                        colour = `spatial extent`)) +
-  geom_jitter(size = 2.5, alpha = 1, shape = 16) +
-  scale_colour_viridis_d() +
+  geom_jitter(size = 2, alpha = 0.75) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
   ylab("ln - latitude range (DD)") +
   xlab("ln - longitude range (DD)") +
-  theme_meta()
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank(),
+        legend.key.size = unit(0.5,"line"))
 
+ggsave(filename = here("figures/fig_S2.pdf"), 
+       plot = fig.s2, width = 8.2, height = 7, units = "cm",
+       dpi = 450)
 
 
 # continue with plotting of figure 2b
@@ -242,8 +256,6 @@ vd2_ana <-
   ungroup() %>%
   select(`paper number`, Relationship_nr, spatial_extent, pos, neu, neg)
 
-vd2_ana
-
 # get the observed proportions
 vd2_obs <- 
   vd2_ana %>%
@@ -255,8 +267,6 @@ vd2_obs <-
   mutate(slope_proportion = slope/total_n) %>%
   mutate(direction = if_else( relationship == "pos", "+",
                               if_else( relationship == "neg", "-", " ")))
-
-
 
 # get the randomised proportions for 1000 different runs
 
@@ -289,10 +299,7 @@ for (i in seq_along(1:r) ) {
 vd2_ran <- 
   bind_rows(vd2_ran, .id = "run")
 
-# examine the observed data
-
-vd2_obs
-
+# summarise the randomised data
 range_spat <- 
   vd2_ran %>%
   group_by(spatial_extent, relationship) %>%
@@ -300,6 +307,7 @@ range_spat <-
             max_slope_proportion = max(slope_proportion),
             .groups = "drop")
 
+# join the the randomised data to the observed data
 sim_dat_spat <- 
   full_join(vd2_obs,
             select(range_spat, spatial_extent, relationship,
@@ -307,7 +315,8 @@ sim_dat_spat <-
             by = c("spatial_extent", "relationship"))
 
 
-d2 <- 
+# plot figure 4b
+fig.4b <- 
   ggplot(data = sim_dat_spat,
        mapping = aes(x = spatial_extent, y = slope_proportion, fill = direction)) +
   geom_bar(stat = "identity", width = 0.4, colour = "white",
@@ -323,19 +332,15 @@ d2 <-
   theme_meta() +
   theme(legend.position = "right")
 
-d_col <- 
-  ggarrange(d1, d2,
-          ncol = 2, nrow = 1,
-          labels = c("a", "b"),
-          font.label = list(size = 12, color = "black", face = "plain", family = NULL),
-          widths = c(1, 1.8))
+fig.4 <- 
+  ggarrange(fig.4a, fig.4b,
+            ncol = 2, nrow = 1,
+            labels = c("a", "b"),
+            font.label = list(size = 9, color = "black", face = "plain", family = NULL),
+            widths = c(1, 1.8))
 
 
-ggsave(filename = here("figures/fig_3.pdf"), plot = d_col,
-       width = 17.3, height = 7.1, units = "cm")
+ggsave(filename = here("figures/fig_4.pdf"), plot = fig.4,
+       width = 17.3, height = 7, units = "cm")
 
-
-
-
-
-
+### END
