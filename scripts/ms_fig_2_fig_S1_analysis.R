@@ -72,6 +72,31 @@ ggplot(data = dfx,
 
 # run 5
 
+# plot the other runs for the supplementary
+
+fig.s1 <- 
+  dfx %>%
+  filter(run != 5) %>%
+  ggplot(data = .,
+         mapping = aes(x = realised_richness, 
+                       y = community_biomass,
+                       colour = species_pool)) +
+  geom_jitter(width = 0.25, size = 1.5) +
+  geom_smooth(method = "lm", size = 0.75, se = FALSE) +
+  ylab("community biomass") +
+  xlab("realised diversity") +
+  labs(colour = "initial diversity") +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  facet_wrap(~run, scales = "free", ncol = 4, nrow = 2) +
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank())
+
+ggsave(filename = here("figures/fig_S1.pdf"), 
+       plot = fig.s1, width = 17.3, height = 11, units = "cm",
+       dpi = 450)
+
+
 
 # load the Jena data
 jena_dat <- read_delim(here("analysis_data/jena_analysis_data.csv"), delim = ",")
@@ -149,12 +174,4 @@ ggsave(filename = here("figures/fig_2.pdf"),
        plot = fig.2, width = 11, height = 11, units = "cm",
        dpi = 450)
 
-
-
-
-
-
-
-
-
-
+### END
