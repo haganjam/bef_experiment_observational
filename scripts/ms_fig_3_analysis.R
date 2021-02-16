@@ -21,10 +21,8 @@ source(here("scripts/function_plotting_theme.R"))
 
 # axis labels
 x1 <- c("realised diversity")
-x2 <- c("initial diversity")
-x3 <- c("realised div. - function est.")
-y1 <- c("function")
-y2 <- expression(paste("biomass (g ",  " m"^"-2", ")") )
+x3 <- c("realised div. - biomass est.")
+y2 <- expression( sqrt(paste("biomass (g ",  " m"^"-2", ")")) )
 y3 <- c("frequency")
 
 
@@ -60,7 +58,7 @@ exp.l <- gglegend(y)
 # prepare the data:
 # remove plots where realised diversity is zero
 # for each sown diversity, subset the treatments where there is at least a realised diversity gradient of one
-data.sc.12.exp <- 
+plot.dat <- 
   exp.dat %>%
   filter(realised.diversity > 0) %>%
   group_by(location, sown.diversity) %>%
@@ -71,8 +69,8 @@ data.sc.12.exp <-
 # if there are only two realised diversity levels:
 # then we want at least multiple replicates at each realised diversity level
 # i.e. at least two replicate plots per realised diversity value unless there are multiple realised diversity values
-data.sc.12.exp <- 
-  data.sc.12.exp %>%
+plot.dat <- 
+  plot.dat %>%
   group_by(location, sown.diversity) %>%
   mutate(n.sd = length(unique(realised.diversity))) %>%
   ungroup() %>%
@@ -88,7 +86,7 @@ data.sc.12.exp <-
 # plot figure 3a
   
 fig.3a <- 
-  ggplot(data = data.sc.12.exp,
+  ggplot(data = plot.dat,
        mapping = aes(x = (realised.diversity), y = sqrt(biomass), group = loc.sown.div,
                      colour = location)) +
   geom_point(shape = 16, size = 1.5) +
@@ -103,8 +101,8 @@ fig.3a <-
 fig.3a
 
 # get the realised diversity - function slopes
-est.sc.2.exp <- 
-  sapply(split(data.sc.12.exp, data.sc.12.exp$loc.sown.div), function(x) {
+est.sc <- 
+  sapply(split(plot.dat, plot.dat$loc.sown.div), function(x) {
     
     x1 <- x$realised.diversity
     y1 <- x$biomass
@@ -118,7 +116,7 @@ est.sc.2.exp <-
 
 # plot figure 3b
 fig.3b <- 
-  ggplot(mapping = aes(x = est.sc.2.exp)) +
+  ggplot(mapping = aes(x = est.sc)) +
   geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C")) +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
   scale_colour_viridis_d(option = "C") +
