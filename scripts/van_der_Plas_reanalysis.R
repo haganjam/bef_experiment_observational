@@ -30,7 +30,7 @@ source(here("scripts/function_plotting_theme.R"))
 # check whether all relationship numbers were accounted for
 
 # read in the completed data file
-vd_full_raw <- read_delim(here("data/van_der_Plas_2019_spatial_extent_complete.csv"), delim = ",")
+vd_full_raw <- read_delim(here("raw_data/van_der_Plas_2019_spatial_extent_complete.csv"), delim = ",")
 
 
 ### figure 3a

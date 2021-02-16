@@ -12,6 +12,11 @@ library(viridis)
 library(here)
 library(vegan)
 
+# make a folder to export the cleaned data
+if(! dir.exists(here("analysis_data"))){
+  dir.create(here("analysis_data"))
+}
+
 
 ####################################
 #                                  #

@@ -9,13 +9,6 @@ library(dplyr)
 library(tidyr)
 library(here)
 
-
-# make a folder to export figures
-if(! dir.exists(here("figures"))){
-  dir.create(here("figures"))
-}
-
-
 ### code for creating a template to fill in the grain and extent information
 
 # load the van der Plas data
