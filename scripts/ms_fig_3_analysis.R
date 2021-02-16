@@ -57,7 +57,9 @@ y <-
 exp.l <- gglegend(y)
 
 
-# prepare the data
+# prepare the data:
+# remove plots where realised diversity is zero
+# for each sown diversity, subset the treatments where there is at least a realised diversity gradient of one
 data.sc.12.exp <- 
   exp.dat %>%
   filter(realised.diversity > 0) %>%
@@ -66,7 +68,9 @@ data.sc.12.exp <-
   ungroup() %>%
   mutate(loc.sown.div = paste(location, sown.diversity, sep = "."))
 
-# if there are only two sown.diversity levels, then we want at least multiple replicates at each realised diversity level
+# if there are only two realised diversity levels:
+# then we want at least multiple replicates at each realised diversity level
+# i.e. at least two replicate plots per realised diversity value unless there are multiple realised diversity values
 data.sc.12.exp <- 
   data.sc.12.exp %>%
   group_by(location, sown.diversity) %>%
