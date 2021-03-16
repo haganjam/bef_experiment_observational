@@ -153,6 +153,7 @@ for (i in 1:length(fig.2_dat)) {
     ylab(ylabs1[[i]]) +
     xlab(l4) +
     labs(colour = l3) +
+    guides(color = guide_legend(override.aes = list(linetype = 0))) +
     scale_colour_viridis_d(option = "C", end = 0.9) +
     theme_meta() +
     theme(legend.position = "bottom",

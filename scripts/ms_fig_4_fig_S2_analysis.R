@@ -327,7 +327,7 @@ fig.4b <-
                 position=position_dodge(0.5)) +
   scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
   scale_fill_viridis_d(option = "C", end = 0.9) +
-  ylab("proportion of slopes") +
+  ylab("") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "right")

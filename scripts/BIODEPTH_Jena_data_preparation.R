@@ -26,12 +26,13 @@ if(! dir.exists(here("analysis_data"))){
 
 
 # load the BIODEPTH observed species richness data
-# bio_d_real <- read_tsv(url("https://ndownloader.figshare.com/files/5640243"))
-bio_d_real <- read_tsv(here("raw_data/Observed.Species.Richness.txt"))
+# bio_d_real <- read_tsv(here("raw_data/Observed.Species.Richness.txt"))
+bio_d_real <- read_tsv(url("https://ndownloader.figshare.com/files/5640243"))
 
 # load the BIODEPTH biomass data (shoot biomass)
-# bio_d_bio <- read_tsv(url("https://ndownloader.figshare.com/files/5640249"))
-bio_d_bio <- read_tsv(here("raw_data/Shoots.txt"))
+# bio_d_bio <- read_tsv(here("raw_data/Shoots.txt"))
+bio_d_bio <- read_tsv(url("https://ndownloader.figshare.com/files/5640249"))
+
 
 # join these data sets together to output the relevant variables
 names(bio_d_real)
@@ -67,8 +68,9 @@ levels(bio_con$location) <- site_names
 ####################################
 
 # load the Jena biomass data
-# jena_bio <- read_delim(url("https://ndownloader.figshare.com/files/5608847"), delim = ",")
-jena_bio <- read_delim(here("raw_data/Jena_Biomass_02-08.csv"), delim = ",")
+# jena_bio <- read_delim(here("raw_data/Jena_Biomass_02-08.csv"), delim = ",")
+jena_bio <- read_delim(url("https://ndownloader.figshare.com/files/5608847"), delim = ",")
+
 head(jena_bio)
 names(jena_bio)
 
@@ -203,7 +205,4 @@ exp.dat <-
 # write a csv of this
 write_csv(x = exp.dat, file = here("analysis_data/bio_exp_dat.csv"))
 
-
-
-
-
+### END

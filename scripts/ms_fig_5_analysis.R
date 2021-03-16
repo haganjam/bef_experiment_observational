@@ -90,7 +90,10 @@ f.5a <-
   theme_meta() +
   theme(legend.position = "bottom",
         legend.key = element_blank(),
-        legend.key.size = unit(0.5,"line"))
+        legend.key.size = unit(0.35,"line"),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7),
+        legend.spacing.x = unit(0.5, 'mm'))
 
 
 # calculate local species pool diversity
@@ -164,7 +167,7 @@ f.5b <-
 # join these two figures together
 f.5 <- ggpubr::ggarrange(f.5a, f.5b, ncol = 2, nrow = 1, 
                          labels = c("a", "b"),
-                         font.label = list(size = 9, color = "black", face = "plain", family = NULL))
+                         font.label = list(size = 9, color = "black", face = "plain") )
 
 ggsave(filename = here("figures/fig_5.pdf"), 
        plot = f.5, width = 11, height = 7.5, units = "cm",

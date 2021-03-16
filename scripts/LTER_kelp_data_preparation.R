@@ -14,8 +14,9 @@ library(here)
 source(here("scripts/function_plotting_theme.R"))
 
 # load the biomass data
-# kelp_raw <- read_csv(url("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-sbc.50.8&entityid=24d18d9ebe4f6e8b94e222840096963c"))
-kelp_raw <- read_csv(here("raw_data/Annual_All_Species_Biomass_at_transect_20200108.csv"))
+# kelp_raw <- read_csv(here("raw_data/Annual_All_Species_Biomass_at_transect_20200108.csv"))
+# this can take a few seconds
+kelp_raw <- read_csv(url("https://portal.edirepository.org/nis/dataviewer?packageid=knb-lter-sbc.50.8&entityid=24d18d9ebe4f6e8b94e222840096963c"))
 
 # check for unique sites
 kelp_raw$SITE %>%
@@ -192,9 +193,4 @@ kelp_ana_sum
 # output an analysis data file
 write_csv(x = kelp_ana_sum, file = here("analysis_data/kelp_data_cleaned.csv"))
 
-
-
-
-
-
-
+### END
