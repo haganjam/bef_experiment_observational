@@ -20,10 +20,10 @@ if(! dir.exists(here("figures"))){
 source(here("scripts/function_plotting_theme.R"))
 
 # axis labels
-x1 <- c("realised diversity")
-x3 <- c("realised div. - biomass est.")
-y2 <- expression( sqrt(paste("biomass (g ",  " m"^"-2", ")")) )
-y3 <- c("frequency")
+x1 <- c("Realised diversity")
+x3 <- c("Realised div. - biomass est.")
+y2 <- expression( sqrt(paste("Biomass (g ",  " m"^"-2", ")")) )
+y3 <- c("Frequency")
 
 
 # Jena and BIODEPTH data
@@ -120,6 +120,7 @@ fig.3b <-
   geom_histogram(fill = viridis::viridis(n = 1, begin = 0.5, end = 0.5, option = "C")) +
   geom_vline(xintercept = 0, colour = "red", linetype = "dashed", size = 1) +
   scale_colour_viridis_d(option = "C") +
+  scale_y_continuous(breaks = c(0, 1, 2)) +
   xlab(x3) +
   ylab(y3) +
   theme_meta()

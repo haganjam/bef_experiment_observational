@@ -85,8 +85,8 @@ f.5a <-
   geom_point(size = 1.5) +
   stat_smooth(geom='line', alpha=0.5, size = 1, se=FALSE, method = "lm") +
   scale_colour_viridis_d(option = "C", end = 0.9) +
-  ylab(expression(sqrt(paste("community dry mass (g ",  "m"^"-2", ")") ))) +
-  xlab("realised diversity") +
+  ylab(expression(sqrt(paste("Community dry mass (g ",  "m"^"-2", ")") ))) +
+  xlab("Realised diversity") +
   theme_meta() +
   theme(legend.position = "bottom",
         legend.key = element_blank(),
@@ -158,8 +158,8 @@ f.5b <-
                               ymax = mean_lsp_ef + se_lsp_ef),
                 width = 0.1) +
   geom_smooth(method = "lm", size = 0.5, colour = "black", alpha = 0.2) +
-  ylab(expression(sqrt(paste("community dry mass (g ",  "m"^"-2", ")") ))) +
-  xlab("local species pool diversity") +
+  ylab(expression(sqrt(paste("Community dry mass (g ",  "m"^"-2", ")") ))) +
+  xlab("Local species pool diversity") +
   theme_meta() +
   theme(plot.margin = unit(c(5.5,5.5,57,5.5), "pt"))
 

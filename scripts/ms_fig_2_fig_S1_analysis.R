@@ -20,11 +20,11 @@ if(! dir.exists(here("figures"))){
 source(here("scripts/function_plotting_theme.R"))
 
 # set up axis labels
-l1 <- expression(sqrt(paste("biomass (g ",  " m"^"-2", ")") ))
-l2 <- c("biomass")
-l3 <- c("initial diversity")
-l4 <- c("realised diversity")
-l5 <- c("model")
+l1 <- expression(sqrt(paste("Biomass (g ",  " m"^"-2", ")") ))
+l2 <- c("Biomass")
+l3 <- c("Initial diversity")
+l4 <- c("Realised diversity")
+l5 <- c("Model")
 
 # load the model data
 mod_dat <- read_delim(here("analysis_data/stachova_leps_model_data_full.csv"), delim = ",")

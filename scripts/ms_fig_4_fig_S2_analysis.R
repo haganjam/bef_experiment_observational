@@ -42,9 +42,7 @@ vd_raw <-
   filter(bef_relationship != "unknown") %>%
   select(`paper number`, Relationship_nr, bef_relationship) %>%
   mutate(direction = if_else( bef_relationship == "Positive", "+",
-                              if_else( bef_relationship == "Negative", "-", " ")),
-         bef_relationship = if_else( bef_relationship == "Positive", "positive",
-                                     if_else( bef_relationship == "Negative", "negative", "neutral")))
+                              if_else( bef_relationship == "Negative", "-", " ")))
 
 # how many unique papers do the bef relationships come from?
 vd_raw$`paper number` %>%
@@ -126,7 +124,7 @@ fig.4a <-
                 width = 0.1) +
   scale_y_continuous(limits = (c(0, 0.905)), breaks = seq(from = 0, to = 0.8, by = 0.2)) +
   scale_fill_viridis_d(option = "C", end = 0.9) +
-  ylab("proportion of slopes") +
+  ylab("Proportion of slopes") +
   xlab(NULL) +
   theme_meta() +
   theme(legend.position = "none")
@@ -146,9 +144,13 @@ fig.4a
 vd2_raw <- 
   vd_dat %>%
   filter(include == "yes") %>%
-  mutate(bef_relationship = if_else( bef_relationship == "Positive", "positive",
-                                     if_else( bef_relationship == "Negative", "negative", "neutral")),
-         spatial_extent = if_else(spatial_extent == "landscape ", "landscape", spatial_extent))
+  mutate(spatial_extent = if_else(spatial_extent == "landscape ", "landscape", spatial_extent))
+
+
+# capitalise the first letter of each spatial extent
+vd2_raw$spatial_extent <- as.factor(vd2_raw$spatial_extent)
+levels(vd2_raw$spatial_extent) <- c("Continental", "Global", "Landscape", "Regional")
+vd2_raw$spatial_extent <- as.character(vd2_raw$spatial_extent)
 
 # how many papers are the bef relationships from with spatial extent information?
 vd2_raw$`paper number` %>%
@@ -216,7 +218,7 @@ vd2_raw$min_lon[vd2_raw$`paper number` == 125] <- 7
 
 # reorder the spatial extent factor so it is ascending
 vd2_raw$spatial_extent <- 
-  factor(vd2_raw$spatial_extent, levels = c("landscape", "regional", "continental", "global"))
+  factor(vd2_raw$spatial_extent, levels = c("Landscape", "Regional", "Continental", "Global"))
 
 
 # plot figure S2
@@ -250,9 +252,9 @@ ggsave(filename = here("figures/fig_S2.pdf"),
 vd2_ana <- 
   vd2_raw %>%
   group_by(spatial_extent) %>%
-  mutate(pos = if_else(bef_relationship == "positive", 1, 0),
-         neu = if_else(bef_relationship == "neutral", 1, 0),
-         neg = if_else(bef_relationship == "negative", 1, 0)) %>%
+  mutate(pos = if_else(bef_relationship == "Positive", 1, 0),
+         neu = if_else(bef_relationship == "Neutral", 1, 0),
+         neg = if_else(bef_relationship == "Negative", 1, 0)) %>%
   ungroup() %>%
   select(`paper number`, Relationship_nr, spatial_extent, pos, neu, neg)
 
