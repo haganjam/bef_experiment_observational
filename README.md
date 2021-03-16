@@ -4,7 +4,7 @@ This repository contains the code for the simulations and analysis for the artic
 
 preliminary citation: 
 
-> We should not expect positive biodiversity-ecosystem functioning relationships in observational data (James G. Hagan, Bram Vanschoenwinkel & Lars Gamfeldt)
+> We should not necessarily expect positive relationships between biodiversity and ecosystem functioning in observational data (James G. Hagan, Bram Vanschoenwinkel & Lars Gamfeldt)
 
 To reproduce the analysis reported in the paper, start by downloading all the scripts in the repository and running these scripts:
 
@@ -26,7 +26,7 @@ Once these four scripts have been run, you can run the following scripts to crea
 + ms_fig_3_analysis.R
 + ms_fig_5_analysis.R
 
-To reproduce fig. 4 and fig. S2, you need to just run the script:
+To reproduce fig. 4 and fig. S2, you need to run the script:
 
 + ms_fig_4_fig_S2_analysis.R
 
@@ -46,7 +46,7 @@ in a Unix Terminal (e.g. bash):
 (on your computer - the folder were you want the repository to live) command on Windows might differ. 
 
 
-```git clone https://github.com/FabianRoger/Bacteria_BEF_Scale.git```
+```git clone https://github.com/haganjam/bef_experiment_observational.git```
 
 This should download the repository directory. 
 
