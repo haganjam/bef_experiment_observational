@@ -149,6 +149,13 @@ head(k.lsp.cal)
 
 # plot fig. 5b
 
+# fit the linear model:
+lm.f.5b <- lm(mean_lsp_ef~lsp_div, data = k.lsp.cal)
+plot(lm.f.5b)
+sum.mod <- summary(lm.f.5b)
+
+r2.lab <- paste("r^2 == ", round(sum.mod$r.squared, 2))
+
 f.5b <- 
   ggplot(data = k.lsp.cal,
          mapping = aes(x = lsp_div, y = mean_lsp_ef)) +
@@ -160,8 +167,13 @@ f.5b <-
   geom_smooth(method = "lm", size = 0.5, colour = "black", alpha = 0.2) +
   ylab(expression(sqrt(paste("Community dry mass (g ",  "m"^"-2", ")") ))) +
   xlab("Local species pool diversity") +
+  annotate(geom = "text", x=37, y=29, label = r2.lab,
+           color="black", parse=TRUE, size = 2.5) +
   theme_meta() +
   theme(plot.margin = unit(c(5.5,5.5,57,5.5), "pt"))
+
+f.5b
+confint(lm.f.5b)
 
 
 # join these two figures together
