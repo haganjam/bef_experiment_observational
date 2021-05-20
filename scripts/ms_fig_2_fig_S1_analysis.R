@@ -20,7 +20,7 @@ if(! dir.exists(here("figures"))){
 source(here("scripts/function_plotting_theme.R"))
 
 # set up axis labels
-l1 <- expression(sqrt(paste("Biomass (g ",  " m"^"-2", ")") ))
+l1 <- expression(paste("Biomass (g ",  " m"^"-2", ")") )
 l2 <- c("Biomass")
 l3 <- c("Initial diversity")
 l4 <- c("Realised diversity")
