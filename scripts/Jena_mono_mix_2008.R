@@ -181,30 +181,26 @@ mix.tot <-
   mix.dat %>%
   select(date, plotcode, replicate, total_biomass_g_m2) %>%
   distinct() %>%
-  group_by(date, plotcode) %>%
-  summarise(mean_biomass_g_m2 = mean(total_biomass_g_m2, na.rm = TRUE), .groups = "drop") %>%
-  group_by(plotcode) %>%
-  summarise(total_biomass_g_m2 = sum(mean_biomass_g_m2), .groups = "drop")
+  group_by(plotcode, replicate) %>%
+  summarise(total_biomass_g_m2 = sum(total_biomass_g_m2), .groups = "drop")
 
 head(mix.tot)
-  
+
 mix.spec <- 
   mix.dat %>%
-  group_by(date, plotcode, species) %>%
-  summarise(mean_biomass_g_m2 = mean(biomass_g_m2, na.rm = TRUE), .groups = "drop") %>%
-  group_by(plotcode, species) %>%
-  summarise(biomass_g_m2 = sum(mean_biomass_g_m2), .groups = "drop")
+  group_by(plotcode, replicate, species) %>%
+  summarise(biomass_g_m2 = sum(biomass_g_m2), .groups = "drop")
 
 head(mix.spec)
 
 # join these datasets together
-mix.sum <- full_join(mix.spec, mix.tot, by = c("plotcode"))
+mix.sum <- full_join(mix.spec, mix.tot, by = c("plotcode", "replicate"))
 length(unique(mix.sum$plotcode))
 head(mix.sum)
 
 # test if total sown biomass is equal to sum of species specific biomasses
 mix.sum %>%
-  group_by(plotcode) %>%
+  group_by(plotcode, replicate) %>%
   summarise(ss_bio = sum(biomass_g_m2, na.rm = TRUE),
             total_bio = mean(total_biomass_g_m2), .groups = "drop") %>%
   mutate(test_bio = if_else(ss_bio != total_bio, 1, 0)) %>%
@@ -241,7 +237,7 @@ length(unique(mix.out$plotcode))
 # calculate sowndiv and realised div
 mix.out <- 
   mix.out %>%
-  group_by(plotcode) %>%
+  group_by(plotcode, replicate) %>%
   mutate(sowndiv_calc = length(unique(species)),
          realised_richness = sum(if_else(biomass_g_m2 > 0, 1, 0)) ) %>%
   ungroup()
@@ -250,7 +246,7 @@ mix.out <-
 mix.out.sum <- 
   mix.out %>%
   filter(sowndiv_calc > 1, sowndiv_calc < 60) %>%
-  group_by(plotcode) %>%
+  group_by(plotcode, replicate) %>%
   summarise(total_biomass_g_m2 = first(total_biomass_g_m2),
             realised_richness = first(realised_richness),
             sowndiv_calc = as.character(first(sowndiv_calc)), .groups = "drop" )
@@ -268,7 +264,7 @@ length(unique(mix.out.sum$plotcode))
 # join the monoculture data data to the species specific mixtures
 mix.part <- 
   mix.out %>%
-  select(plotcode, species, biomass_g_m2)
+  select(plotcode, replicate, species, biomass_g_m2)
 
 mono.join <- 
   mono.join %>% 
@@ -302,7 +298,13 @@ mono_join <-
 
 part_dat <- 
   full_join(mix.part, mono_join, by = "species") %>%
-  select(plotcode, species, sown_plant_biomass_g_m2, biomass_g_m2)
+  select(plotcode, replicate, species, sown_plant_biomass_g_m2, biomass_g_m2)
+
+part_dat$sample <- paste(part_dat$plotcode, part_dat$replicate, sep = "_")
+
+part_dat <- 
+  part_dat %>%
+  select(sample, species, sown_plant_biomass_g_m2, biomass_g_m2)
 
 # rename the columns
 names(part_dat) <- c("sample", "species", "M", "Y")
@@ -346,8 +348,7 @@ any(FALSE == ((unique(part_dat$sample)) == (n_rye$sample)))
 
 # convert part_dat into a list
 part.list <- split(part_dat, part_dat$sample)
-
-part.list$B1A11
+part.list[[1]]
 
 part_out <- vector("list", length = length(part.list)) 
 for(i in 1:length(part_out)) {
@@ -367,57 +368,54 @@ View(filter(part_df, sample == "B1A11"))
 lapply(part_df, function(x){sum(if_else(is.na(x), 1, 0))})
 
 # join the partition data to the realised diversity data
-length(unique(part_df$sample))
-length(unique(mix.out.sum$plotcode))
 
+# create a unique sample identifier for the mix.out.sum data
+mix.out.sum$plotcode <- paste(mix.out.sum$plotcode, mix.out.sum$replicate, sep = "_")
+
+# left join because certain replicates containing species with zero monoculture values were removed
 part_join <- left_join(part_df, rename(mix.out.sum, sample = plotcode), by = "sample")
+head(part_join)
 
 ggplot(data = part_join,
-       mapping = aes(x = realised_richness, y = abs(dominance), colour = sowndiv_calc)) +
+       mapping = aes(x = realised_richness, y = (dominance), colour = sowndiv_calc)) +
   geom_point() +
   geom_smooth(method = "lm") +
   facet_wrap(~sowndiv_calc, scales = "free")
 
-ggplot(data = part_join,
-       mapping = aes(x = realised_richness, y = trait.dependent.complementarity, colour = sowndiv_calc)) +
-  geom_point() +
-  facet_wrap(~sowndiv_calc, scales = "free")
-
-part_join %>%
-  filter(selection.effect < -6000)
-
-ggplot(data = part_join,
-       mapping = aes(x = realised_richness, y = net.biodiversity.effect, colour = sowndiv_calc)) +
-  geom_point() +
-  facet_wrap(~sowndiv_calc, scales = "free")
-
 
 # how does this partition perform?
-f1
 
+### checking individual data.points
+n_test <- 5
+
+x <- 1/rep(n_rye$n[n_test], length(unique(part.list[[n_test]]$species)))
+B.ef.prep(df = part.list[[n_test]], RYe = x)
+
+fox.2005.pt(adf = part.list[[n_test]], RY.exp = x)
+
+
+
+### toy examples
 df1 <- data.frame(sample = c(1, 1),
-                 species = c(1, 2),
-                 M = c(50, 100),
-                 Y = c(25, 50))
+                  species = c(1, 2),
+                  M = c(50, 100),
+                  Y = c(25, 50))
+
 fox.2005.pt(adf = df1, RY.exp = c(0.5, 0.5))
 
 df2 <- data.frame(sample = c(1, 1),
                   species = c(1, 2),
                   M = c(50, 100),
                   Y = c(30, 60))
+
 fox.2005.pt(adf = df2, RY.exp = c(0.5, 0.5))
 
 df3 <- data.frame(sample = c(1, 1),
                   species = c(1, 2),
                   M = c(50, 100),
                   Y = c(0, 100))
-fox.2005.pt(adf = df3, RY.exp = c(0.5, 0.5))
 
-df.5 <- part.list$B4A17
-df.5[1, 4] <- 0
-df.5[2, 4] <- 41
-df.5
-fox.2005.pt(adf = df.5, RY.exp = c(0.5, 0.5))
+fox.2005.pt(adf = df3, RY.exp = c(0.5, 0.5))
 
 
 
