@@ -44,8 +44,7 @@ mod_dat_t <-
   mod_dat_t %>%
   filter(species_pool %in% c(5, 10, 15, 20))
 
-
-# plot the realised diversity function relationship for each model
+# convert species pool to levels
 levs <- sort(unique(mod_dat_t$species_pool), decreasing = FALSE)
 
 dfx <- 
@@ -53,15 +52,52 @@ dfx <-
   mutate(species_pool = factor(as.factor(species_pool), levels = levs ),
          run = factor(as.factor(run), levels = 1:length(unique(mod_dat_t$run) )) )
 
+
+# fig. s1: plot the realised diversity - initial diversity relationship for all models
+cor_mod <-
+  dfx %>%
+  group_by(run) %>%
+  summarise(Pearson_r = cor(as.numeric(species_pool), 
+                            realised_richness, 
+                            method = "pearson") %>%
+              round(., 2)) %>%
+  mutate(Pearson_r = paste("r = ", Pearson_r, sep = "")) %>%
+ungroup()
+
+fig.s1 <- 
+  ggplot(data = dfx,
+         mapping = aes(x = as.numeric(species_pool), 
+                       y = realised_richness)) +
+  geom_jitter(width = 0.1, size = 1.5) +
+  geom_smooth(method = "lm", size = 0.5, se = TRUE, colour = "black") +
+  ylab(l4) +
+  xlab(l3) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  facet_wrap(~run, scales = "free") +
+  theme_meta() +
+  geom_text(
+    data    = cor_mod,
+    mapping = aes(x = -Inf, y = +Inf, label = Pearson_r),
+    vjust = +1.4,
+    hjust = -0.2,
+    size = 3)
+fig.s1
+
+ggsave(filename = here("figures/fig_S1.pdf"), 
+       plot = fig.s1, width = 17.3, height = 15, units = "cm",
+       dpi = 450)
+
+
+# plot the realised diversity function relationship
 ggplot(data = dfx,
        mapping = aes(x = realised_richness, 
                      y = community_biomass,
                      colour = species_pool)) +
   geom_jitter(width = 0.25, size = 1.5) +
   geom_smooth(method = "lm", size = 0.75, se = FALSE) +
-  ylab("community biomass") +
-  xlab("realised diversity") +
-  labs(colour = "initial diversity") +
+  ylab(l2) +
+  xlab(l4) +
+  labs(colour = "Initial diversity") +
   scale_colour_viridis_d(option = "C", end = 0.9) +
   facet_wrap(~run, scales = "free") +
   theme_meta() +
@@ -72,9 +108,9 @@ ggplot(data = dfx,
 
 # run 5
 
-# plot the other runs for the supplementary
+# fig. s3: plot the other runs for the supplementary
 
-fig.s1 <- 
+fig.s3 <- 
   dfx %>%
   filter(run != 5) %>%
   ggplot(data = .,
@@ -83,17 +119,17 @@ fig.s1 <-
                        colour = species_pool)) +
   geom_jitter(width = 0.25, size = 1.5) +
   geom_smooth(method = "lm", size = 0.75, se = FALSE) +
-  ylab("community biomass") +
-  xlab("realised diversity") +
-  labs(colour = "initial diversity") +
+  ylab(l2) +
+  xlab(l4) +
+  labs(colour = "Initial diversity") +
   scale_colour_viridis_d(option = "C", end = 0.9) +
   facet_wrap(~run, scales = "free", ncol = 4, nrow = 2) +
   theme_meta() +
   theme(legend.position = "bottom",
         legend.key = element_blank())
 
-ggsave(filename = here("figures/fig_S1.pdf"), 
-       plot = fig.s1, width = 17.3, height = 11, units = "cm",
+ggsave(filename = here("figures/fig_S3.pdf"), 
+       plot = fig.s3, width = 17.3, height = 11, units = "cm",
        dpi = 450)
 
 
@@ -173,6 +209,39 @@ fig.2 <- ggpubr::ggarrange(f2.1, f2.2, ncol = 1, nrow = 2, labels = NULL,
 
 ggsave(filename = here("figures/fig_2.pdf"), 
        plot = fig.2, width = 11, height = 11, units = "cm",
+       dpi = 450)
+
+
+
+# fig. s2: plot initial diversity vs. realised diversity
+cor_jena <-
+  jena_dat %>%
+  summarise(Pearson_r = cor(as.numeric(species_pool), 
+                           realised_richness,
+                           method = "pearson") %>%
+              round(., digits = 2)) %>%
+  mutate(Pearson_r = paste("r = ", Pearson_r, sep = "")) %>%
+  ungroup()
+
+fig.s2 <- 
+  ggplot(data = jena_dat,
+       mapping = aes(x = as.numeric(species_pool), 
+                     y = realised_richness)) +
+  geom_jitter(width = 0.1, size = 1.5) +
+  geom_smooth(method = "lm", size = 0.5, se = TRUE, colour = "black") +
+  ylab(l4) +
+  xlab(l3) +
+  theme_meta() +
+  geom_text(
+    data    = cor_jena,
+    mapping = aes(x = -Inf, y = +Inf, label = Pearson_r),
+    vjust = +1.7,
+    hjust = -0.3,
+    size = 4)
+fig.s2
+
+ggsave(filename = here("figures/fig_S2.pdf"), 
+       plot = fig.s2, width = 6, height = 6, units = "cm",
        dpi = 450)
 
 ### END
