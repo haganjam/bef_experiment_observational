@@ -133,7 +133,7 @@ fig.4a <-
 fig.4a
 
 
-# figure 4b and figure s4
+# figure 4b and figure s5
 
 # check the spatial extent data
 
@@ -221,15 +221,15 @@ vd2_raw$spatial_extent <-
   factor(vd2_raw$spatial_extent, levels = c("Landscape", "Regional", "Continental", "Global"))
 
 
-# plot figure S2
+# plot figure S5
 
-fig_s4_dat <- 
+fig_s5_dat <- 
   vd2_raw %>%
   mutate(lat_diff = (max_lat - min_lat),
          lon_diff = (max_lon - min_lon))
 
-fig.s4 <- 
-  ggplot(data = rename(fig_s4_dat, `spatial extent` = spatial_extent),
+fig.s5 <- 
+  ggplot(data = rename(fig_s5_dat, `spatial extent` = spatial_extent),
          mapping = aes(x = log(1 + lon_diff), y = log(1 + lat_diff), 
                        colour = `spatial extent`)) +
   geom_jitter(size = 2, alpha = 0.75) +
@@ -241,8 +241,8 @@ fig.s4 <-
         legend.key = element_blank(),
         legend.key.size = unit(0.5,"line"))
 
-ggsave(filename = here("figures/fig_S4.pdf"), 
-       plot = fig.s4, width = 8.2, height = 7, units = "cm",
+ggsave(filename = here("figures/fig_S5.pdf"), 
+       plot = fig.s5, width = 8.2, height = 7, units = "cm",
        dpi = 450)
 
 
