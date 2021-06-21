@@ -110,7 +110,7 @@ ggplot(data = dfx,
 
 # fig. s3: plot the other runs for the supplementary
 
-fig.s3 <- 
+fig.s4 <- 
   dfx %>%
   filter(run != 5) %>%
   ggplot(data = .,
@@ -128,8 +128,8 @@ fig.s3 <-
   theme(legend.position = "bottom",
         legend.key = element_blank())
 
-ggsave(filename = here("figures/fig_S3.pdf"), 
-       plot = fig.s3, width = 17.3, height = 11, units = "cm",
+ggsave(filename = here("figures/fig_S4.pdf"), 
+       plot = fig.s4, width = 17.3, height = 11, units = "cm",
        dpi = 450)
 
 

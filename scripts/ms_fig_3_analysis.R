@@ -94,7 +94,6 @@ fig.3a <-
   xlab(x1) +
   ylab(y2) +
   scale_colour_viridis_d(option = "C", begin = 0, end = 0.9) +
-  # facet_wrap(~loc.sown.div, scales = "free") +
   theme_meta() + 
   theme(legend.position = "none")
 
@@ -137,5 +136,39 @@ fig.3 <-
 
 ggsave(filename = here("figures/fig_3.pdf"), 
        plot = fig.3, width = 11, height = 7, units = "cm")
+
+
+# fig. s3: plot the relationship between initial diversity and realised diversity
+cor_bio <- 
+  plot.dat %>%
+  summarise(Pearson_r = cor(sown.diversity, realised.diversity, method = "pearson") %>%
+              round(., 2)) %>%
+  mutate(Pearson_r = paste("r = ", Pearson_r, sep = ""))
+
+fig.s3 <- 
+  ggplot() +
+  geom_jitter(data = plot.dat,
+             mapping = aes(x = sown.diversity, y = (realised.diversity),
+                           colour = location), 
+             shape = 16, size = 1.5, width = 0.1) +
+  geom_smooth(data = plot.dat,
+              mapping = aes(x = sown.diversity, y = (realised.diversity)),
+              method = "lm", se = TRUE, size = 0.5, colour = "black") +
+  xlab("Initial diversity") +
+  ylab(x1) +
+  scale_colour_viridis_d(option = "C", begin = 0, end = 0.9) +
+  theme_meta() + 
+  geom_text(
+    data    = cor_bio,
+    mapping = aes(x = -Inf, y = +Inf, label = Pearson_r),
+    vjust = +1.7,
+    hjust = -0.3,
+    size = 4) +
+  theme(legend.position = "bottom")
+
+ggsave(filename = here("figures/fig_S3.pdf"), 
+       plot = fig.s3, width = 6, height = 6, units = "cm",
+       dpi = 450)
+
 
 ### END

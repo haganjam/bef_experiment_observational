@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Fig. 4 and Fig. S2 analysis (van der Plas 2019, systematic review data)
+# Title: Fig. 4 and Fig. S4 analysis (van der Plas 2019, systematic review data)
 
 # load relevant libraries
 library(readr)
@@ -133,7 +133,7 @@ fig.4a <-
 fig.4a
 
 
-# figure 4b and figure s2
+# figure 4b and figure s4
 
 # check the spatial extent data
 
@@ -223,13 +223,13 @@ vd2_raw$spatial_extent <-
 
 # plot figure S2
 
-fig_s2_dat <- 
+fig_s4_dat <- 
   vd2_raw %>%
   mutate(lat_diff = (max_lat - min_lat),
          lon_diff = (max_lon - min_lon))
 
-fig.s2 <- 
-  ggplot(data = rename(fig_s2_dat, `spatial extent` = spatial_extent),
+fig.s4 <- 
+  ggplot(data = rename(fig_s4_dat, `spatial extent` = spatial_extent),
          mapping = aes(x = log(1 + lon_diff), y = log(1 + lat_diff), 
                        colour = `spatial extent`)) +
   geom_jitter(size = 2, alpha = 0.75) +
@@ -241,12 +241,12 @@ fig.s2 <-
         legend.key = element_blank(),
         legend.key.size = unit(0.5,"line"))
 
-ggsave(filename = here("figures/fig_S2.pdf"), 
-       plot = fig.s2, width = 8.2, height = 7, units = "cm",
+ggsave(filename = here("figures/fig_S4.pdf"), 
+       plot = fig.s4, width = 8.2, height = 7, units = "cm",
        dpi = 450)
 
 
-# continue with plotting of figure 2b
+# continue with plotting of figure 4b
 
 # add columns for neutral, negative and positive slopes
 vd2_ana <- 
