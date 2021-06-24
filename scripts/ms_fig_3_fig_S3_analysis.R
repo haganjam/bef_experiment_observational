@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Plot Fig. 3
+# Title: Plot Fig. 3 and Fig. S3
 
 # load plotting libraries
 library(ggplot2)
@@ -164,11 +164,10 @@ fig.s3 <-
     vjust = +1.7,
     hjust = -0.3,
     size = 4) +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right")
 
 ggsave(filename = here("figures/fig_S3.pdf"), 
-       plot = fig.s3, width = 6, height = 6, units = "cm",
+       plot = fig.s3, width = 11, height = 7, units = "cm",
        dpi = 450)
-
 
 ### END

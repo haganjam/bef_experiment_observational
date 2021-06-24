@@ -209,6 +209,7 @@ spat_clas %>%
 # correct these mistakes
 
 # for paper 116, replace the max_lat: 49 with max_lat: 40
+View(vd2_raw[vd2_raw$`paper number` == 116,] )
 vd2_raw$max_lat[vd2_raw$`paper number` == 116] <- 40
 
 # for paper 125, replace max_lat: 7 with max_lat: 53
@@ -242,7 +243,7 @@ fig.s5 <-
         legend.key.size = unit(0.5,"line"))
 
 ggsave(filename = here("figures/fig_S5.pdf"), 
-       plot = fig.s5, width = 8.2, height = 7, units = "cm",
+       plot = fig.s5, width = 8.5, height = 7, units = "cm",
        dpi = 450)
 
 
