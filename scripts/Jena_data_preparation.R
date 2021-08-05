@@ -104,8 +104,8 @@ cor(rowSums(sp_bio), site_bio$target.biomass)
 site_bio <- 
   site_bio %>%
   mutate(comm_biomass = rowSums(sp_bio),
-         observed_sr = rowSums(decostand(sp_bio, method = "pa")) )
-
+         observed_sr = rowSums(decostand(sp_bio, method = "pa")),
+         shannon_d = exp(diversity(x = sp_bio, index = "shannon")))
 
 # remove the 60 species treatment as it is a positive control along with the monocultulres
 site_bio <- 

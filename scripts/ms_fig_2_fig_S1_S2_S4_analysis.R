@@ -244,4 +244,36 @@ ggsave(filename = here("figures/fig_S2.pdf"),
        plot = fig.s2, width = 6, height = 6, units = "cm",
        dpi = 450)
 
+
+### check exponential shannon to see if it changes the results at all (reviewer 2 comment)
+names(jena_dat)
+
+levs <- sort(unique(jena_dat$species_pool), decreasing = FALSE)
+
+fig_rev_2 <- 
+  jena_dat %>%
+  mutate(species_pool = factor(as.factor(species_pool), levels = levs )  ) %>%
+  ggplot(data = .,
+       mapping = aes(x = shannon_d, 
+                     y = community_biomass,
+                     colour = species_pool )) +
+  geom_jitter(width = 0.25, size = 1.5) +
+  geom_smooth(method = "lm", size = 0.75, se = FALSE) +
+  ylab(l1) +
+  xlab("Effective number of species (q = 1)") +
+  labs(colour = l3) +
+  guides(color = guide_legend(override.aes = list(linetype = 0))) +
+  scale_colour_viridis_d(option = "C", end = 0.9) +
+  theme_meta() +
+  theme(legend.position = "bottom",
+        legend.key = element_blank(),
+        legend.title = element_blank(),
+        legend.key.size = unit(0.5,"line"))
+
+ggsave(filename = here("figures/fig_rev_2.pdf"), 
+       plot = fig_rev_2, width = 6, height = 6, units = "cm",
+       dpi = 450)
+
+cor.test(jena_dat$realised_richness, jena_dat$shannon_d)
+
 ### END
