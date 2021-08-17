@@ -1,7 +1,7 @@
 
 # Project: Examining the relationship between biodiversity and ecosystem functioning in experimental and observational data
 
-# Title: Fig. 4 and Fig. S4 analysis (van der Plas 2019, systematic review data)
+# Title: Fig. 4 and Fig. S5 analysis (van der Plas 2019, systematic review data)
 
 # load relevant libraries
 library(readr)
@@ -28,9 +28,8 @@ source(here("scripts/function_plotting_theme.R"))
 # import the dataset with the spatial extent and grain information filled in
 # check whether all relationship numbers were accounted for
 
-# read in the completed data file
-vd_dat <- read_delim(here("raw_data/van_der_Plas_2019_spatial_extent_complete.csv"), delim = ",")
-
+# read in the completed data file from figshare: https://doi.org/10.6084/m9.figshare.15178248.v1
+vd_dat <- read_delim(url("https://ndownloader.figshare.com/files/29154891"), delim = ",")
 
 # figure 4a
 
