@@ -20,7 +20,7 @@ Next, run the script:
 
 This script calls the function from stachova_leps_model.R and runs nine different simulated biodiversity experiments with varying levels of average interspecific competition. The resulting dataset is saved into the analysis_data folder. Note that this is computationally intensive and can take 10-20 minutes to run.
 
-Once these four scripts have been run, you can run the following scripts to create fig. 2, fig. S1, fig. S2, fig.S4, fig. 3, fig. S3 and fig. 5:
+Once these four scripts have been run, you can run the following scripts to create fig. 2, 3 and 5, and fig. S1, S2, S3, S4:
 
 + ms_fig_2_fig_S1_S2_S4_analysis.R
 + ms_fig_3_fig_S3_analysis.R
