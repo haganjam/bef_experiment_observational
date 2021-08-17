@@ -4,7 +4,7 @@ This repository contains the code for the simulations and analysis for the artic
 
 preliminary citation: 
 
-> We should not necessarily expect positive relationships between biodiversity and ecosystem functioning in observational data (James G. Hagan, Bram Vanschoenwinkel & Lars Gamfeldt)
+> We should not necessarily expect positive relationships between biodiversity and ecosystem functioning in observational data (James G. Hagan, Bram Vanschoenwinkel & Lars Gamfeldt, Ecology Letters (accepted))
 
 To reproduce the analysis reported in the paper, start by downloading all the scripts in the repository and running these scripts:
 
@@ -20,17 +20,17 @@ Next, run the script:
 
 This script calls the function from stachova_leps_model.R and runs nine different simulated biodiversity experiments with varying levels of average interspecific competition. The resulting dataset is saved into the analysis_data folder. Note that this is computationally intensive and can take 10-20 minutes to run.
 
-Once these four scripts have been run, you can run the following scripts to create fig. 2, fig. S1, fig. 3 and fig. 5:
+Once these four scripts have been run, you can run the following scripts to create fig. 2, fig. S1, fig. S2, fig.S4, fig. 3, fig. S3 and fig. 5:
 
-+ ms_fig_2_fig_S1_analysis.R
-+ ms_fig_3_analysis.R
++ ms_fig_2_fig_S1_S2_S4_analysis.R
++ ms_fig_3_fig_S3_analysis.R
 + ms_fig_5_analysis.R
 
 To reproduce fig. 4 and fig. S2, you need to run the script:
 
-+ ms_fig_4_fig_S2_analysis.R
++ ms_fig_4_fig_S5_analysis.R
 
-This loads in data from van der Plas (2019)'s systematic review that we added spatial extent information to. The data is downloaded directly from the script via a figshare link (to be added soon...).
+This script loads in data from van der Plas (2019)'s systematic review that we added spatial extent information to. The data is downloaded directly from the script via a figshare link from this DOI: https://doi.org/10.6084/m9.figshare.15178248.v1.
 
 For reference, the script called: van_der_plas_review_create_data_template.R was used to take the raw file posted by van der Plas (2019, Biological Reviews) and create a template from which we could add the spatial extent information.
 
